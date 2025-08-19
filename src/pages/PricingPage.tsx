@@ -160,8 +160,12 @@ const PricingPage = () => {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-3xl font-bold text-foreground mb-2">{plan.name}</CardTitle>
                  <div className="mb-4">
-                   <span className="text-4xl font-bold text-primary">{getPrice(plan)}</span>
-                   <span className="text-muted-foreground">{getPeriod()}</span>
+                   <div className="relative">
+                     <span className="text-4xl font-bold bg-gradient-neon bg-clip-text text-transparent">
+                       {getPrice(plan)}
+                     </span>
+                     <span className="text-muted-foreground ml-1">{getPeriod()}</span>
+                   </div>
                    {isAnnual && (
                      <div className="text-sm text-muted-foreground mt-1">
                        Equivale a R${plan.monthlyPrice}/mês
