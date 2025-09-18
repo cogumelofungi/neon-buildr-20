@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { X, Volume2, VolumeX, Play, Pause, SkipBack, SkipForward, AlertCircle } from 'lucide-react';
+
 
 interface VideoPlayerProps {
   isOpen: boolean;
@@ -54,6 +55,10 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title, onProgress }: Vi
   const youtubeId = isYouTubeUrl(videoUrl) ? getYouTubeId(videoUrl) : null;
   const googleDriveId = isGoogleDriveUrl(videoUrl) ? getGoogleDriveId(videoUrl) : null;
 
+  // Refs e timers para carregamento do Google Drive
+  const driveLoadStartRef = useRef<number | null>(null);
+  const fallbackErrorTimerRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (isOpen) {
       setIsPlaying(false);
@@ -61,23 +66,49 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title, onProgress }: Vi
       setDuration(0);
       setIsLoading(true);
       setShowErrorDialog(false);
-    }
-  }, [isOpen, videoUrl]);
 
-  // Detectar erro do Google Drive após timeout
-  useEffect(() => {
-    if (isOpen && googleDriveId) {
-      const timer = setTimeout(() => {
-        setShowErrorDialog(true);
-      }, 10000); // 10 segundos para detectar se não carregou
-
-      return () => clearTimeout(timer);
+      if (googleDriveId) {
+        driveLoadStartRef.current = Date.now();
+        // Se depois de 8s ainda não deu sinal de carregamento satisfatório, mostra aviso
+        if (fallbackErrorTimerRef.current) {
+          clearTimeout(fallbackErrorTimerRef.current as any);
+        }
+        fallbackErrorTimerRef.current = window.setTimeout(() => {
+          setShowErrorDialog(true);
+        }, 8000);
+      }
     }
-  }, [isOpen, googleDriveId]);
+    return () => {
+      if (fallbackErrorTimerRef.current) {
+        clearTimeout(fallbackErrorTimerRef.current as any);
+        fallbackErrorTimerRef.current = null;
+      }
+    };
+  }, [isOpen, videoUrl, googleDriveId]);
+
+  const handleDriveIframeLoad = () => {
+    // Quanto mais rápido carregar, maior a chance de ser a tela de erro do Drive
+    const start = driveLoadStartRef.current ?? Date.now();
+    const elapsed = Date.now() - start;
+
+    setIsLoading(false);
+
+    if (fallbackErrorTimerRef.current) {
+      clearTimeout(fallbackErrorTimerRef.current as any);
+      fallbackErrorTimerRef.current = null;
+    }
+
+    if (elapsed < 1200) {
+      // Heurística: carregou quase instantâneo => provavelmente tela de erro do Drive
+      setShowErrorDialog(true);
+    }
+  };
 
   const handleErrorDialogClose = () => {
     setShowErrorDialog(false);
     onClose();
+    // Voltar para a tela inicial
+    window.location.href = '/';
   };
 
   const renderPlayer = () => {
@@ -97,13 +128,22 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title, onProgress }: Vi
     }
 
     if (googleDriveId) {
-      // Google Drive embed
+      // Google Drive embed com loading e heurística de erro
       return (
         <div className="relative w-full h-full bg-black">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                <p className="text-white text-sm">Carregando vídeo...</p>
+              </div>
+            </div>
+          )}
           <iframe
             src={`https://drive.google.com/file/d/${googleDriveId}/preview`}
             title={title}
             className="w-full h-full"
+            onLoad={handleDriveIframeLoad}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
             allowFullScreen
           />
