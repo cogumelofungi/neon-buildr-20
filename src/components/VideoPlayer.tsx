@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { X, Volume2, VolumeX, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { X, Volume2, VolumeX, Play, Pause, SkipBack, SkipForward, AlertCircle } from 'lucide-react';
 
 interface VideoPlayerProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title, onProgress }: Vi
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   // Extract YouTube video ID if it's a YouTube URL
   const getYouTubeId = (url: string) => {
@@ -58,8 +60,25 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title, onProgress }: Vi
       setCurrentTime(0);
       setDuration(0);
       setIsLoading(true);
+      setShowErrorDialog(false);
     }
   }, [isOpen, videoUrl]);
+
+  // Detectar erro do Google Drive após timeout
+  useEffect(() => {
+    if (isOpen && googleDriveId) {
+      const timer = setTimeout(() => {
+        setShowErrorDialog(true);
+      }, 10000); // 10 segundos para detectar se não carregou
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, googleDriveId]);
+
+  const handleErrorDialogClose = () => {
+    setShowErrorDialog(false);
+    onClose();
+  };
 
   const renderPlayer = () => {
     if (youtubeId) {
@@ -140,23 +159,46 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title, onProgress }: Vi
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-full w-screen h-screen p-0 m-0 bg-black border-0">
-        {/* Close button - positioned absolutely */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 border border-white/30"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-        
-        {/* Full screen video */}
-        <div className="w-full h-full">
-          {renderPlayer()}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-full w-screen h-screen p-0 m-0 bg-black border-0">
+          {/* Close button - positioned absolutely */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 border border-white/30"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+          
+          {/* Full screen video */}
+          <div className="w-full h-full">
+            {renderPlayer()}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog for Google Drive Issues */}
+      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-destructive" />
+              Episódio com problema
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Este episódio está temporariamente indisponível devido a uma limitação do Google Drive. 
+              Nossa equipe já está trabalhando para resolver este problema o mais rápido possível.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleErrorDialogClose}>
+              Voltar à tela inicial
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
