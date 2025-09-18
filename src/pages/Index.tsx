@@ -6,7 +6,7 @@ import { ProgramCarousel } from "@/components/ProgramCarousel";
 import { SeriesCarousel } from "@/components/SeriesCarousel";
 import { ProgramCard } from "@/components/ProgramCard";
 import { VideoPlayer } from "@/components/VideoPlayer";
-import { EpisodesList } from "@/components/EpisodesList";
+import { EpisodesCarousel } from "@/components/EpisodesCarousel";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FilterSort } from "@/components/FilterSort";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -724,15 +724,15 @@ const Index = () => {
         />
       )}
 
-      {/* Episodes List Modal */}
+      {/* Episodes Carousel */}
       {selectedSeason && (
-        <EpisodesList
-          isOpen={!!selectedSeason}
-          onClose={() => setSelectedSeason(null)}
-          season={selectedSeason.season}
-          seriesTitle={selectedSeason.seriesTitle}
-          onPlayEpisode={handlePlayEpisode}
-        />
+        <div className="mt-8 px-4 sm:px-6 lg:px-8">
+          <EpisodesCarousel
+            season={selectedSeason.season}
+            seriesTitle={selectedSeason.seriesTitle}
+            onPlayEpisode={handlePlayEpisode}
+          />
+        </div>
       )}
     </div>
   );
