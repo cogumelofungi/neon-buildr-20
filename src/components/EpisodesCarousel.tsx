@@ -79,12 +79,13 @@ export function EpisodesCarousel({
                   onMouseEnter={() => setHoveredEpisode(episode.id)}
                   onMouseLeave={() => setHoveredEpisode(null)}
                 >
-                  {/* Episode Image */}
+                  {/* Episode Image - using season poster */}
                   <div className="relative w-full h-full overflow-hidden rounded-lg shadow-lg group-hover:shadow-2xl transition-shadow duration-300">
-                    {/* Episode image placeholder */}
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Play className="w-12 h-12 text-muted-foreground" />
-                    </div>
+                    <ImageWithSkeleton
+                      src={season.poster || "/placeholder.svg"}
+                      alt={`Episódio ${episodeNumber} - ${episode.title}`}
+                      className="w-full h-full object-cover"
+                    />
                   
                     {/* Gradient overlay */}
                     <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition-all duration-300 ${
