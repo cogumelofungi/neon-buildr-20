@@ -1,8 +1,9 @@
-import { Play, Clock, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Play, Clock, Calendar, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { ImageWithSkeleton } from "@/components/ImageWithSkeleton";
 import { Season, Episode } from "@/data/programs";
 
 interface EpisodesCarouselProps {
@@ -16,6 +17,8 @@ export function EpisodesCarousel({
   seriesTitle, 
   onPlayEpisode 
 }: EpisodesCarouselProps) {
+  const [hoveredEpisode, setHoveredEpisode] = useState<string | null>(null);
+
   const handleEpisodeClick = (episode: Episode) => {
     if (episode.videoUrl || episode.link) {
       onPlayEpisode(episode);
@@ -23,7 +26,7 @@ export function EpisodesCarousel({
   };
 
   const formatDuration = (minutes?: number) => {
-    if (!minutes) return "Duração não informada";
+    if (!minutes) return "—";
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hours > 0) {
@@ -64,75 +67,104 @@ export function EpisodesCarousel({
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {season.episodes.map((episode, index) => (
-            <CarouselItem key={episode.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-              <Card 
-                className="h-full cursor-pointer group hover:shadow-lg transition-all duration-300 hover:scale-105"
-                onClick={() => handleEpisodeClick(episode)}
-              >
-                <CardContent className="p-4 h-full flex flex-col">
-                  {/* Episode Number Badge */}
-                  <div className="mb-3">
-                    <Badge variant="outline" className="text-xs font-bold">
-                      EP {index + 1}
-                    </Badge>
-                  </div>
-
-                  {/* Episode Image Placeholder */}
-                  <div className="aspect-video bg-muted rounded-md mb-3 flex items-center justify-center group-hover:bg-accent transition-colors">
-                    <Play className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-
-                  {/* Episode Info */}
-                  <div className="flex-1 space-y-2">
-                    <h4 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                      {episode.title}
-                    </h4>
-                    
-                    {episode.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {episode.description}
-                      </p>
-                    )}
-
-                    <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      {episode.duration && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{formatDuration(episode.duration)}</span>
-                        </div>
-                      )}
-                      {episode.airDate && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{new Date(episode.airDate).toLocaleDateString('pt-BR')}</span>
-                        </div>
-                      )}
+          {season.episodes.map((episode, index) => {
+            const isHovered = hoveredEpisode === episode.id;
+            const episodeNumber = index + 1;
+            
+            return (
+              <CarouselItem key={episode.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                <div 
+                  className="cursor-pointer w-full aspect-[2/3] max-h-64 group p-1 transition-all duration-300"
+                  onClick={() => handleEpisodeClick(episode)}
+                  onMouseEnter={() => setHoveredEpisode(episode.id)}
+                  onMouseLeave={() => setHoveredEpisode(null)}
+                >
+                  {/* Episode Image */}
+                  <div className="relative w-full h-full overflow-hidden rounded-lg shadow-lg group-hover:shadow-2xl transition-shadow duration-300">
+                    {/* Episode image placeholder */}
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <Play className="w-12 h-12 text-muted-foreground" />
                     </div>
-                  </div>
+                  
+                    {/* Gradient overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition-all duration-300 ${
+                      isHovered ? 'opacity-100' : 'opacity-0'
+                    }`} />
+                    
+                    {/* Content overlay */}
+                    <div className={`absolute inset-0 flex flex-col justify-between p-3 transition-all duration-300 ${
+                      isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                    }`}>
+                      {/* Top - Watched indicator */}
+                      <div className="flex justify-end">
+                        {episode.watched && (
+                          <Badge variant="secondary" className="bg-green-600/90 backdrop-blur-sm text-white text-xs px-2 py-0.5 border border-green-600/20 shadow-lg">
+                            Assistido
+                          </Badge>
+                        )}
+                      </div>
 
-                  {/* Play Button */}
-                  <div className="mt-3">
-                    <Button
-                      variant={episode.videoUrl || episode.link ? "default" : "secondary"}
-                      size="sm"
-                      className="w-full text-xs group-hover:scale-105 transition-transform"
-                      disabled={!episode.videoUrl && !episode.link}
-                    >
-                      <Play className="w-3 h-3 mr-1 fill-current" />
-                      {episode.videoUrl || episode.link ? "Assistir" : "Indisponível"}
-                    </Button>
-                  </div>
+                      {/* Bottom - Info and actions */}
+                      <div className="space-y-2">
+                        <div>
+                          <h4 className="text-white font-semibold text-sm leading-tight line-clamp-2 mb-1 drop-shadow-sm">
+                            {episode.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-white/90">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{formatDuration(episode.duration)}</span>
+                            </div>
+                            {episode.airDate && (
+                              <>
+                                <span>•</span>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{new Date(episode.airDate).toLocaleDateString('pt-BR')}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="w-full h-8 text-xs font-semibold bg-white text-black hover:bg-white/90 transition-all duration-200 hover:scale-105 shadow-lg"
+                          disabled={!episode.videoUrl && !episode.link}
+                        >
+                          <Play className="w-3 h-3 mr-1 fill-black" />
+                          {episode.videoUrl || episode.link ? "Assistir" : "Indisponível"}
+                        </Button>
+                      </div>
+                    </div>
 
-                  {episode.watched && (
-                    <Badge variant="secondary" className="mt-2 text-xs self-start">
-                      Assistido
-                    </Badge>
-                  )}
-                </CardContent>
-              </Card>
-            </CarouselItem>
-          ))}
+                    {/* Episode badge - red like in the original cards */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-red-600/90 backdrop-blur-sm text-white text-xs px-2 py-0.5 border border-red-600/20 shadow-lg"
+                      >
+                        EP {episodeNumber}
+                      </Badge>
+                    </div>
+
+                    {/* Hover border effect */}
+                    <div className={`absolute inset-0 rounded-lg border-2 transition-all duration-300 pointer-events-none ${
+                      isHovered
+                        ? 'border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]' 
+                        : 'border-transparent'
+                    }`} />
+                    
+                    {/* Shine effect on hover */}
+                    <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none ${
+                      isHovered ? 'translate-x-full transition-transform duration-700' : '-translate-x-full'
+                    }`} />
+                  </div>
+                </div>
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
         <CarouselPrevious className="left-2" />
         <CarouselNext className="right-2" />
