@@ -72,7 +72,7 @@ export function EpisodesCarousel({
             const episodeNumber = index + 1;
             
             return (
-              <CarouselItem key={episode.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+              <CarouselItem key={episode.id} className="pl-2 md:pl-4 basis-auto w-36 sm:w-40 md:w-44" >
                 <div 
                   className="cursor-pointer w-full aspect-[2/3] max-h-64 group p-1 transition-all duration-300"
                   onClick={() => handleEpisodeClick(episode)}
