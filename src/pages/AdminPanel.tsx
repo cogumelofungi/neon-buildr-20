@@ -11,7 +11,7 @@ import { Program, getPrograms, addProgram, updateProgram, deleteProgram, clearAl
 import { SeasonManager } from "@/components/SeasonManager";
 import { AdminProgramCard } from "@/components/AdminProgramCard";
 import { AddProgramDialog } from "@/components/AddProgramDialog";
-import { Input } from "@/components/ui/input";
+
 const AdminPanel = () => {
   const [programs, setPrograms] = useState<Program[]>(() => getPrograms());
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
@@ -217,14 +217,20 @@ const AdminPanel = () => {
                   <Download className="w-4 h-4 mr-1" />
                   Exportar
                 </Button>
-                <Input
+                <label htmlFor="import-file">
+                  <Button variant="outline" size="sm" asChild>
+                    <span className="cursor-pointer">
+                      <Upload className="w-4 h-4 mr-1" />
+                      Importar
+                    </span>
+                  </Button>
+                </label>
+                <input
                   id="import-file"
                   type="file"
-                  accept=".json,application/json"
+                  accept=".json"
                   onChange={handleImport}
-                  aria-label="Importar arquivo JSON"
-                  title="Importar JSON"
-                  className="max-w-xs"
+                  className="hidden"
                 />
                 <Button variant="destructive" size="sm" onClick={clearAllData}>
                   <Trash2 className="w-4 h-4 mr-1" />
