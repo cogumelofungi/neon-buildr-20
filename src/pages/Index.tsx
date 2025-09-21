@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/HeroBanner";
 import { ProgramCarousel } from "@/components/ProgramCarousel";
 import { SeriesCarousel } from "@/components/SeriesCarousel";
 import { ProgramCard } from "@/components/ProgramCard";
-import { AdvancedVideoPlayer } from "@/components/AdvancedVideoPlayer";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { AdvancedSearchBar, SearchFilters } from "@/components/AdvancedSearchBar";
 import { EpisodesCarousel } from "@/components/EpisodesCarousel";
@@ -835,9 +835,9 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Advanced Video Player Modal */}
+      {/* Video Player Modal */}
       {currentVideo && (
-        <AdvancedVideoPlayer
+        <VideoPlayer
           isOpen={!!currentVideo}
           onClose={handleClosePlayer}
           videoUrl={currentVideo.url}
