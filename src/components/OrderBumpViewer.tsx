@@ -442,22 +442,48 @@ export default function OrderBumpViewer({ orderBump, onClose, appTemplate, appTh
     const defaultBonusColors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899", "#6366f1"];
     const getBonusColor = (i: number) => obThemeConfig[`bonus${i + 1}Color`] || defaultBonusColors[i % defaultBonusColors.length];
 
+    // Apply membersHeaderSize
+    const headerHeights: Record<string, string> = { small: "240px", medium: "300px", large: "340px" };
+    const headerHeight = headerHeights[membersHeaderSize] || "340px";
+
     return (
       <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
         <BackButton className="absolute top-4 left-4 z-20" />
         
-        {/* Header */}
-        <div className="px-6 pt-16 pb-6 text-center">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: appNameColor }}>{appName}</h1>
-          {appDescription && <p className="text-sm" style={{ color: appDescriptionColor }}>{appDescription}</p>}
-        </div>
+        {/* Header with configurable height */}
+        {orderBump.capa_url ? (
+          <div
+            className="w-full relative"
+            style={{
+              height: headerHeight,
+              backgroundImage: `url(${orderBump.capa_url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)" }} />
+            <div className="absolute bottom-6 left-0 right-0 text-center">
+              <h1 className="text-3xl font-bold mb-2" style={{ color: appNameColor }}>{appName}</h1>
+              {appDescription && <p className="text-sm" style={{ color: appDescriptionColor }}>{appDescription}</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="px-6 pt-16 pb-6 text-center">
+            <h1 className="text-3xl font-bold mb-2" style={{ color: appNameColor }}>{appName}</h1>
+            {appDescription && <p className="text-sm" style={{ color: appDescriptionColor }}>{appDescription}</p>}
+          </div>
+        )}
 
         {/* Main Product */}
         {orderBump.produto_principal_url && (
-          <div className="px-6 mb-4">
+          <div className="px-6 mb-4 mt-4">
             <div
-              className="rounded-2xl p-6 pr-12 flex items-center justify-between shadow-lg relative overflow-visible cursor-pointer hover:scale-[1.02] transition-transform"
-              style={{ backgroundColor: primaryColor, minHeight: "120px" }}
+              className={`rounded-2xl p-6 pr-12 flex items-center justify-between shadow-lg relative overflow-visible cursor-pointer hover:scale-[1.02] transition-transform ${membersShowCardBorder ? 'border-2' : ''}`}
+              style={{ 
+                backgroundColor: primaryColor, 
+                minHeight: "120px",
+                borderColor: membersShowCardBorder ? (primaryColor || '#4783F6') : undefined,
+              }}
               onClick={() => handleOpenContent(orderBump.produto_principal_url!, orderBump.main_product_label || "")}
             >
               <div className="flex-1 pr-4">
@@ -480,8 +506,16 @@ export default function OrderBumpViewer({ orderBump, onClose, appTemplate, appTh
           {bonuses.map((bonus, i) => (
             <div
               key={i}
-              className="relative rounded-xl flex items-center shadow-md cursor-pointer hover:scale-[1.02] transition-transform overflow-visible"
-              style={{ backgroundColor: getBonusColor(i), minHeight: "60px", paddingLeft: "16px", paddingRight: "70px", paddingTop: "12px", paddingBottom: "12px" }}
+              className={`relative rounded-xl flex items-center shadow-md cursor-pointer hover:scale-[1.02] transition-transform overflow-visible ${membersShowCardBorder ? 'border-2' : ''}`}
+              style={{ 
+                backgroundColor: getBonusColor(i), 
+                minHeight: "60px", 
+                paddingLeft: "16px", 
+                paddingRight: "70px", 
+                paddingTop: "12px", 
+                paddingBottom: "12px",
+                borderColor: membersShowCardBorder ? (primaryColor || '#4783F6') : undefined,
+              }}
               onClick={() => handleOpenContent(bonus.url!, bonus.label || "")}
             >
               <h3 className="text-white text-base font-semibold">{bonus.label || `Bônus ${i + 1}`}</h3>
@@ -527,8 +561,13 @@ export default function OrderBumpViewer({ orderBump, onClose, appTemplate, appTh
               <button
                 key={i}
                 onClick={() => handleOpenContent(product.url!, product.label || "")}
-                className="w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all hover:scale-[1.01]"
-                style={{ backgroundColor: isDark ? "rgba(30, 20, 50, 0.8)" : "rgba(255, 255, 255, 0.9)", border: isDark ? "1px solid rgba(139, 92, 246, 0.3)" : "1px solid rgba(139, 92, 246, 0.2)" }}
+                className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all hover:scale-[1.01] ${flowShowCardBorder ? 'border-2' : ''}`}
+                style={{ 
+                  backgroundColor: isDark ? "rgba(30, 20, 50, 0.8)" : "rgba(255, 255, 255, 0.9)", 
+                  border: flowShowCardBorder 
+                    ? `2px solid ${primaryColor || '#4783F6'}` 
+                    : (isDark ? "1px solid rgba(139, 92, 246, 0.3)" : "1px solid rgba(139, 92, 246, 0.2)"),
+                }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}>
@@ -568,8 +607,11 @@ export default function OrderBumpViewer({ orderBump, onClose, appTemplate, appTh
             <button
               key={i}
               onClick={() => handleOpenContent(product.url!, product.label || "")}
-              className="rounded-2xl p-4 text-center transition-all hover:scale-[1.02]"
-              style={{ backgroundColor: isDark ? "#047857" : "#ffffff" }}
+              className={`rounded-2xl p-4 text-center transition-all hover:scale-[1.02] ${shopRemoveCardBorder ? "" : "border-2"}`}
+              style={{ 
+                backgroundColor: isDark ? "#047857" : "#ffffff",
+                borderColor: shopRemoveCardBorder ? "transparent" : (primaryColor || "#10b981"),
+              }}
             >
               <div className="w-16 h-16 rounded-xl mx-auto mb-2 overflow-hidden" style={{ backgroundColor: "#10b98120" }}>
                 <ImageIcon className="w-8 h-8 m-auto mt-4 opacity-30" style={{ color: "#A3C1FB" }} />
