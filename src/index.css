@@ -1,425 +1,404 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Cinematic streaming platform design system inspired by Netflix */
+/* MigraBook Design System - Dark theme with neon accents */
 
 @layer base {
   :root {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 95%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 95%;
-
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
-
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 60%;
-
-    --accent: 330 81% 60%;
-    --accent-foreground: 0 0% 98%;
-
+    /* MigraBook brand colors - Dark theme */
+    --app-bg: 225 15% 6%;          /* #0F1117 - Main background */
+    --app-surface: 225 15% 8%;     /* #131925 - Card/surface background */
+    --app-surface-hover: 225 15% 10%; /* #171D2B - Hover state */
+    --app-border: 225 15% 15%;     /* #252B3A - Borders */
+    --app-muted: 0 0% 80%;         /* #CCCCCC - Muted text */
+    
+    /* Brand gradient colors */
+    --neon-blue: 218 89% 61%;      /* #4783F6 */
+    --neon-pink: 314 71% 70%;      /* #EC74BC */
+    
+    /* Semantic colors */
+    --background: var(--app-bg);
+    --foreground: 210 40% 98%;     /* #F8FAFC - Primary text */
+    
+    --card: var(--app-surface);
+    --card-foreground: 210 40% 98%;
+    
+    --popover: var(--app-surface);
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: var(--neon-blue);
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: var(--app-surface);
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: var(--app-surface-hover);
+    --muted-foreground: var(--app-muted);
+    
+    --accent: var(--neon-blue);
+    --accent-foreground: 210 40% 98%;
+    
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 12%;
-    --ring: 0 72% 51%;
-
-    /* Cinematic color palette */
-    --netflix-red: 0 72% 51%;
-    --deep-red: 0 60% 45%;
-    --warm-grey: 0 0% 25%;
-    --cool-grey: 220 10% 25%;
-    --soft-white: 0 0% 92%;
+    --destructive-foreground: 210 40% 98%;
     
-    /* Dark backgrounds */
-    --cinema-black: 0 0% 8%;
-    --rich-black: 0 0% 6%;
-    --charcoal-black: 0 0% 12%;
-    --surface-dark: 0 0% 10%;
+    --border: var(--app-border);
+    --input: var(--app-surface);
+    --ring: var(--neon-blue);
     
-    /* Elegant gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 6%) 0%, hsl(0 0% 10%) 50%, hsl(0 0% 8%) 100%);
-    --gradient-overlay: linear-gradient(180deg, transparent 0%, hsl(0 0% 8% / 0.8) 80%, hsl(0 0% 8%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(330 81% 60%) 100%);
-    --gradient-subtle: linear-gradient(135deg, hsl(0 0% 10%) 0%, hsl(0 0% 12%) 100%);
-    
-    /* Refined shadows */
-    --shadow-soft: 0 4px 20px hsl(0 0% 0% / 0.25);
-    --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.35);
-    --shadow-dramatic: 0 20px 60px hsl(0 0% 0% / 0.5);
-    --shadow-red-glow: 0 0 20px hsl(0 72% 51% / 0.3);
-    
-    /* Smooth transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    --transition-drag: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 95%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 95%;
-
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
-
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 60%;
-
-    --accent: 330 81% 60%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 12%;
-    --ring: 0 72% 51%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 0.75rem;
   }
 
   .light {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 15%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
-
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 15%;
-
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 330 81% 60%;
-    --accent-foreground: 0 0% 98%;
-
+    /* MigraBook brand colors - Light theme */
+    --app-bg: 0 0% 98%;            /* #FAFAFA - Main background */
+    --app-surface: 0 0% 100%;      /* #FFFFFF - Card/surface background */
+    --app-surface-hover: 210 40% 98%; /* #F8FAFC - Hover state */
+    --app-border: 214 32% 91%;     /* #E2E8F0 - Borders */
+    --app-muted: 215 16% 47%;      /* #64748B - Muted text */
+    
+    /* Brand gradient colors stay the same */
+    --neon-blue: 218 89% 61%;      /* #4783F6 */
+    --neon-pink: 314 71% 70%;      /* #EC74BC */
+    
+    /* Semantic colors */
+    --background: var(--app-bg);
+    --foreground: 222 84% 5%;      /* #0F172A - Primary text */
+    
+    --card: var(--app-surface);
+    --card-foreground: 222 84% 5%;
+    
+    --popover: var(--app-surface);
+    --popover-foreground: 222 84% 5%;
+    
+    --primary: var(--neon-blue);
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 84% 5%;
+    
+    --muted: var(--app-surface-hover);
+    --muted-foreground: var(--app-muted);
+    
+    --accent: var(--neon-blue);
+    --accent-foreground: 210 40% 98%;
+    
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 90%;
-    --input: 0 0% 96%;
-    --ring: 0 72% 51%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: var(--app-border);
+    --input: var(--app-surface);
+    --ring: var(--neon-blue);
+    
+    --radius: 0.75rem;
+    
+    /* Custom design tokens */
+    --gradient-neon: linear-gradient(135deg, hsl(var(--neon-blue)), hsl(var(--neon-pink)));
+    --gradient-surface: linear-gradient(135deg, hsl(var(--app-surface)), hsl(var(--app-surface-hover)));
+    --shadow-neon: 0 0 30px hsl(var(--neon-blue) / 0.3);
+    --shadow-elegant: 0 8px 32px hsl(225 15% 3% / 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Progress bar */
+    --progress-bg: var(--app-surface);
+    --progress-fill: var(--gradient-neon);
+    
+    /* Upload blocks */
+    --upload-bg: var(--app-surface);
+    --upload-border: var(--app-border);
+    --upload-hover: var(--app-surface-hover);
+    
+    /* Phone mockup */
+    --phone-bg: 225 20% 12%;
+    --phone-screen: 0 0% 6%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
+  /* Hide native browser/PWA progress bars to prevent duplication */
+  body::-webkit-progress-bar {
+    display: none !important;
+  }
+  
+  /* Hide chrome PWA loading bar */
+  html, body {
+    overscroll-behavior: none;
+  }
+  
+  /* Prevent PWA progress indicator duplication */
+  @media (display-mode: standalone) {
+    body {
+      overflow: hidden;
+      overflow-y: auto;
+    }
+  }
+
+  /* Phone Input Custom Dropdown Styles */
+  .PhoneInputCountrySelect__menu {
+    background: hsl(var(--app-surface)) !important;
+    border: 1px solid hsl(var(--app-border)) !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+    z-index: 9999 !important;
+    max-height: 15rem !important;
+    overflow-y: auto !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .PhoneInputCountrySelectOption {
+    padding: 0.5rem 0.75rem !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    color: hsl(var(--foreground)) !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .PhoneInputCountrySelectOption:hover {
+    background-color: hsl(var(--app-surface-hover)) !important;
+  }
+
+  .PhoneInputCountrySelectOption--selected {
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+  }
+
+  .PhoneInputCountrySelectOption .PhoneInputCountryIcon {
+    margin-right: 0.75rem !important;
+    width: 1.25rem !important;
+    height: 0.9375rem !important;
+    flex-shrink: 0 !important;
+    object-fit: cover !important;
+    border-radius: 2px !important;
+  }
+
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+
+  /* Custom utilities */
+  .gradient-neon {
+    background: var(--gradient-neon);
+  }
+
+  .gradient-surface {
+    background: var(--gradient-surface);
+  }
+
+  .shadow-neon {
+    box-shadow: var(--shadow-neon);
+  }
+
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--app-surface));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--app-border));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--app-muted));
+  }
+
+  /* Publish button custom styling */
+  .btn-publish {
+    background: hsl(var(--neon-blue)) !important;
+    color: hsl(210 40% 98%) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .btn-publish:hover {
+    background: hsl(218 89% 35%) !important; /* Darker blue for hover */
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px hsl(218 89% 35% / 0.3);
+  }
+
+  .btn-publish:disabled {
+    background: hsl(var(--app-muted)) !important;
+    transform: none;
+    box-shadow: none;
   }
 }
 
 @layer components {
-  /* Cinematic program card */
-  .program-card {
-    @apply relative overflow-hidden rounded-lg cursor-pointer;
-    background: var(--gradient-subtle);
-    @apply border border-border/20;
-    box-shadow: var(--shadow-soft);
-    transition: var(--transition-smooth);
-  }
-  
-  .program-card:hover {
-    @apply scale-105;
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-4px) scale(1.05);
+  /* Upload zone styling */
+  .upload-zone {
+    @apply border-2 border-dashed border-border rounded-xl p-6 text-center transition-all duration-300;
+    @apply hover:border-primary/50 hover:bg-muted/30;
   }
 
-  /* Netflix-style search */
-  .search-input {
-    @apply bg-card/50 backdrop-blur-sm border border-border/30;
-    transition: var(--transition-smooth);
-  }
-  
-  .search-input:focus-within {
-    @apply border-primary/50;
-    box-shadow: var(--shadow-red-glow);
+  .upload-zone.dragover {
+    @apply border-primary bg-primary/10;
   }
 
-  /* Cinematic hero background */
-  .hero-banner {
-    background: var(--gradient-hero);
+  /* Phone mockup */
+  .phone-mockup {
+    width: 280px;
+    height: 560px;
+    background: hsl(var(--phone-bg));
+    border-radius: 36px;
+    padding: 8px;
+    position: relative;
+    box-shadow: 
+      0 0 0 2px hsl(var(--app-border)),
+      0 20px 40px hsl(225 15% 3% / 0.3);
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: hsl(var(--phone-screen));
+    border-radius: 28px;
+    overflow: hidden;
     position: relative;
   }
-  
-  .hero-banner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--gradient-overlay);
-    pointer-events: none;
+
+  /* Desktop phone mockup for published apps */
+  .desktop-phone-mockup {
+    width: 375px;
+    height: min(812px, calc(100vh - 64px));
+    max-height: calc(100vh - 64px);
+    background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 44px;
+    padding: 12px;
+    position: relative;
+    box-shadow: 
+      0 0 0 3px #333,
+      0 0 0 6px #1a1a1a,
+      0 25px 60px rgba(0, 0, 0, 0.5),
+      0 10px 30px rgba(0, 0, 0, 0.3);
   }
 
-  /* Netflix-style button */
-  .btn-primary {
-    background: var(--gradient-accent);
-    @apply text-white font-semibold border-0 rounded-md px-6 py-2.5;
-    box-shadow: var(--shadow-soft);
-    transition: var(--transition-smooth);
-  }
-  
-  .btn-primary:hover {
-    @apply brightness-110;
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-1px);
+  /* Notch removido para não cobrir conteúdo do app */
+
+  .desktop-phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #1a1a1a;
+    border-radius: 32px;
+    overflow: hidden;
+    overflow-y: auto;
+    position: relative;
   }
 
-  /* Category navigation */
-  .category-nav {
-    @apply bg-card/80 backdrop-blur-lg border-b border-border/20;
+  /* Scrollbar styling for desktop mockup */
+  .desktop-phone-screen::-webkit-scrollbar {
+    width: 4px;
   }
 
-  /* Elegant overlay */
-  .program-overlay {
-    @apply absolute inset-0;
-    background: var(--gradient-overlay);
-    @apply opacity-0;
-    transition: var(--transition-smooth);
-  }
-  
-  .program-card:hover .program-overlay {
-    @apply opacity-100;
-  }
-  
-  /* Main header */
-  .main-header {
-    @apply backdrop-blur-xl border-b border-border/10;
-    background: hsl(var(--background) / 0.95);
-    box-shadow: var(--shadow-soft);
-  }
-  
-  /* Carousel container */
-  .carousel-container {
-    @apply relative;
-  }
-  
-  .carousel-container .carousel-button {
-    @apply absolute top-1/2 -translate-y-1/2 z-10;
-    @apply bg-card/80 backdrop-blur-sm border border-border/30;
-    @apply hover:bg-card hover:border-primary/30;
-    @apply w-12 h-12 rounded-full flex items-center justify-center;
-    @apply opacity-0 group-hover:opacity-100;
-    transition: var(--transition-smooth);
-  }
-  
-  .carousel-container .carousel-button.prev {
-    @apply -left-6;
-  }
-  
-  .carousel-container .carousel-button.next {
-    @apply -right-6;
+  .desktop-phone-screen::-webkit-scrollbar-track {
+    background: transparent;
   }
 
-  /* Section titles */
-  .section-title {
-    @apply text-xl font-semibold text-foreground mb-4;
+  .desktop-phone-screen::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
   }
 
-  /* Progress bar for continue watching */
-  .progress-bar {
-    @apply w-full h-1 bg-border/30 rounded-full overflow-hidden;
-  }
-  
-  .progress-fill {
-    @apply h-full bg-primary rounded-full;
-    transition: var(--transition-smooth);
+  .desktop-phone-screen::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 
-  /* Scroll indicators for better UX */
-  .carousel-container::after {
-    content: '';
-    @apply absolute right-0 top-0 bottom-0 w-12 pointer-events-none;
-    background: linear-gradient(90deg, transparent, hsl(var(--background)));
-    @apply opacity-0 group-hover:opacity-100;
-    transition: var(--transition-smooth);
+  /* Progress step */
+  .progress-step {
+    @apply flex items-center relative;
   }
 
-  /* Enhanced hover effects */
-  .hover-scale {
-    transition: var(--transition-smooth);
-  }
-  
-  .hover-scale:hover {
-    @apply scale-105;
+  .progress-step.completed .step-circle {
+    @apply bg-primary text-primary-foreground;
   }
 
-  /* Hover effect only on enter, no transition on exit */
-  .hover-scale-enter-only {
-    transform: scale(1);
-    transform-origin: center center;
-  }
-  
-  .hover-scale-enter-only:hover {
-    transform: scale(1.05);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  .progress-step.active .step-circle {
+    @apply border-primary text-primary;
   }
 
-  /* Smooth loading animations */
-  .fade-in {
-    animation: fadeIn 0.3s ease-out;
+  .step-circle {
+    @apply w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-border flex items-center justify-center text-sm font-medium transition-all;
   }
-  
-  @keyframes fadeIn {
+
+  /* Slow spin animation for maintenance icon */
+  @keyframes spin-slow {
     from {
-      opacity: 0;
-      transform: translateY(10px);
+      transform: rotate(0deg);
     }
     to {
-      opacity: 1;
-      transform: translateY(0);
+      transform: rotate(360deg);
     }
   }
 
-  /* Pulse effect for loading */
-  .pulse-gentle {
-    animation: pulseGentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  
-  @keyframes pulseGentle {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
   }
 
-  /* Stagger animation for grids */
-  .stagger-animation {
-    animation: staggerFadeIn 0.5s ease-out backwards;
-  }
-  
-  @keyframes staggerFadeIn {
+  /* Continuous scroll animation for logo carousel */
+  @keyframes scroll-left {
     from {
-      opacity: 0;
-      transform: translateY(20px) scale(0.95);
+      transform: translateX(0);
     }
     to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateX(-50%);
     }
   }
 
-  /* Better empty state styling */
-  .empty-state {
-    @apply text-center py-16 bg-card/20 rounded-lg border border-border/20;
-  }
-  
-  .empty-state-icon {
-    @apply w-16 h-16 mx-auto mb-6 bg-card/50 rounded-full flex items-center justify-center;
+  .animate-scroll-left {
+    animation: scroll-left 20s linear infinite;
   }
 
-  /* Enhanced carousel scrollbar */
-  .carousel-container::-webkit-scrollbar {
-    display: none;
+  .animate-scroll-left:hover {
+    animation-play-state: paused;
   }
-  
-  .carousel-container {
+
+  .animate-scroll-left-slow {
+    animation: scroll-left 50s linear infinite;
+  }
+
+  .animate-scroll-left-slow:hover {
+    animation-play-state: paused;
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 
-  /* Drag & Drop improvements */
-  .drag-preview {
-    opacity: 0.8;
-    transform: rotate(5deg) scale(0.9);
-    transition: var(--transition-drag);
-    box-shadow: var(--shadow-dramatic);
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
-  
-  .drag-ghost {
-    opacity: 0.3;
-    filter: grayscale(100%);
-    transition: var(--transition-drag);
+
+  /* Marquee animation */
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
   }
-  
-  .drop-zone-active {
-    background: linear-gradient(45deg, transparent 25%, hsl(var(--primary) / 0.1) 25%, hsl(var(--primary) / 0.1) 50%, transparent 50%, transparent 75%, hsl(var(--primary) / 0.1) 75%);
-    background-size: 8px 8px;
-    animation: move-stripes 0.5s linear infinite;
+
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
   }
-  
-  @keyframes move-stripes {
-    0% { background-position: 0 0; }
-    100% { background-position: 8px 8px; }
-  }
-  
-  .drag-handle {
-    cursor: grab;
-    transition: var(--transition-smooth);
-  }
-  
-  .drag-handle:active {
-    cursor: grabbing;
-  }
-  
-  .drag-no-select {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+
+  .animate-marquee-fast {
+    animation: marquee 8s linear infinite;
   }
 }
