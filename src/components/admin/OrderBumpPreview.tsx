@@ -67,6 +67,25 @@ interface OrderBumpPreviewProps {
     bonus7_background?: string;
     bonus8_background?: string;
     bonus9_background?: string;
+    // Template-specific settings
+    show_app_icon?: boolean;
+    showcase_text_position?: string;
+    members_header_size?: string;
+    shop_remove_card_border?: boolean;
+    members_show_card_border?: boolean;
+    flow_show_card_border?: boolean;
+    app_name_color?: string;
+    app_description?: string;
+    app_description_color?: string;
+    bonus1_color?: string;
+    bonus2_color?: string;
+    bonus3_color?: string;
+    bonus4_color?: string;
+    bonus5_color?: string;
+    bonus6_color?: string;
+    bonus7_color?: string;
+    bonus8_color?: string;
+    bonus9_color?: string;
   };
   appTheme?: 'dark' | 'light';
   appTemplate?: string;
@@ -218,13 +237,27 @@ export default function OrderBumpPreview({ formData, appTheme = 'dark', appTempl
       bonus7Background: formData.bonus7_background,
       bonus8Background: formData.bonus8_background,
       bonus9Background: formData.bonus9_background,
-      // Template-specific defaults
-      showAppIcon: true,
-      showcaseTextPosition: 'bottom',
-      membersHeaderSize: 'large',
-      shopRemoveCardBorder: false,
-      membersShowCardBorder: false,
-      flowShowCardBorder: false,
+      // Template-specific settings from formData (independent per order bump)
+      showAppIcon: (formData as any).show_app_icon ?? true,
+      showcaseTextPosition: (formData as any).showcase_text_position || 'bottom',
+      membersHeaderSize: (formData as any).members_header_size || 'large',
+      shopRemoveCardBorder: (formData as any).shop_remove_card_border ?? false,
+      membersShowCardBorder: (formData as any).members_show_card_border ?? false,
+      flowShowCardBorder: (formData as any).flow_show_card_border ?? false,
+      // Visual customization fields
+      appNameColor: (formData as any).app_name_color || '#ffffff',
+      appDescription: (formData as any).app_description || '',
+      appDescriptionColor: (formData as any).app_description_color || '#ffffff',
+      // Bonus colors
+      bonus1Color: (formData as any).bonus1_color || null,
+      bonus2Color: (formData as any).bonus2_color || null,
+      bonus3Color: (formData as any).bonus3_color || null,
+      bonus4Color: (formData as any).bonus4_color || null,
+      bonus5Color: (formData as any).bonus5_color || null,
+      bonus6Color: (formData as any).bonus6_color || null,
+      bonus7Color: (formData as any).bonus7_color || null,
+      bonus8Color: (formData as any).bonus8_color || null,
+      bonus9Color: (formData as any).bonus9_color || null,
     };
 
     // Map bonus fields
