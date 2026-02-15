@@ -71,12 +71,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setLoading(false);
+        return { error: error.message };
+      }
+      // onAuthStateChange will handle setting loading to false on success
+      // But add a safety timeout
+      setTimeout(() => setLoading(false), 5000);
+      return { error: null };
+    } catch (e: any) {
       setLoading(false);
+      return { error: e?.message || 'Erro inesperado' };
     }
-    // If success, onAuthStateChange will set loading to false after updating user/isAdmin
-    return { error: error?.message ?? null };
   };
 
   const signOut = async () => {

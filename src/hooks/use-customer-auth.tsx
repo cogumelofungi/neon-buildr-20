@@ -151,23 +151,31 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
-
-    if (error) return { error: error.message };
-
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        full_name: fullName,
-        phone: phone || null,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: fullName, phone: phone || '' },
+        },
       });
-    }
 
-    return { error: null };
+      if (error) return { error: error.message };
+
+      // Try to create profile — fire and forget, don't block signup flow
+      if (data.user) {
+        (supabase as any).from('profiles').upsert({
+          user_id: data.user.id,
+          full_name: fullName,
+          phone: phone || null,
+        }, { onConflict: 'user_id' }).catch(() => {});
+      }
+
+      return { error: null };
+    } catch (e: any) {
+      return { error: e?.message || 'Erro inesperado' };
+    }
   };
 
   const signOut = async () => {
