@@ -1,108 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MigraBook</title>
-    <meta name="description" content="Crie e publique seus apps facilmente.">
-    <meta name="author" content="Lovable" />
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    
-    <!-- PWA Manifest - Gerado dinamicamente pelo AppViewer para cada app -->
-    <!-- Não incluir link estático aqui para permitir manifest dinâmico por app -->
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#4783F6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="MigraBook">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    <link rel="icon" href="/migrabook-favicon.png" type="image/png">
-    
-    <!-- Disable pull-to-refresh and progress bars on PWA -->
-    <style>
-      body {
-        overscroll-behavior-y: contain;
-      }
-      /* Hide native loading indicators */
-      @media (display-mode: standalone) {
-        html {
-          overflow: hidden;
-          height: 100%;
-        }
-        body {
-          overflow: auto;
-          height: 100%;
-          overscroll-behavior: none;
-        }
-      }
-    </style>
+    <!-- TODO: Set the document title to the name of your application -->
+    <title>Burger & Açaí - Cardápio</title>
+    <meta name="description" content="Os melhores hambúrgueres artesanais e açaís cremosos da cidade. Confira nosso cardápio!" />
+    <meta name="author" content="Burger & Açaí" />
 
-    
-    
+    <meta property="og:title" content="Burger & Açaí - Cardápio" />
+    <meta property="og:description" content="Lovable Generated Project" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    <meta property="og:title" content="MigraBook">
-  <meta name="twitter:title" content="MigraBook">
-  <meta property="og:description" content="Crie e publique seus apps facilmente.">
-  <meta name="twitter:description" content="Crie e publique seus apps facilmente.">
-</head>
+  </head>
 
   <body>
-    <!-- iOS PWA Redirect - Executa ANTES do React para garantir redirecionamento correto -->
-    <script>
-      (function() {
-        var isIOSStandalone = navigator.standalone === true;
-        var isDisplayModeStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-        var isStandalone = isIOSStandalone || isDisplayModeStandalone;
-        var currentPath = window.location.pathname;
-        
-        // Se está em modo standalone e na raiz, redirecionar para o app salvo
-        if (isStandalone && (currentPath === '/' || currentPath === '/index.html' || currentPath === '')) {
-          var savedSlug = localStorage.getItem('ios_pwa_last_slug') || localStorage.getItem('pwa_current_app_slug');
-          if (savedSlug) {
-            console.log('[PWA iOS] Redirecionando para o app salvo:', savedSlug);
-            window.location.replace('/' + savedSlug);
-          }
-        }
-      })();
-    </script>
-    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Service Worker Registration -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          if (window.location.pathname.startsWith('/app/')) {
-            navigator.serviceWorker.register('/sw-app.js', { scope: '/app/' })
-              .then((registration) => {
-                console.log('SW (app) registered: ', registration);
-              })
-              .catch((registrationError) => {
-                console.log('SW (app) registration failed: ', registrationError);
-              });
-          } else {
-            navigator.serviceWorker.register('/sw.js')
-              .then((registration) => {
-                console.log('SW registered: ', registration);
-              })
-              .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
-              });
-          }
-        });
-      }
-    </script>
   </body>
 </html>
