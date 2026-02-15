@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/use-customer-auth';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,11 @@ const ContaLogin = () => {
   const { signIn, signUp, user } = useCustomerAuth();
   const navigate = useNavigate();
 
-  // If already logged in, redirect
-  if (user) {
-    navigate('/conta');
-    return null;
-  }
+  useEffect(() => {
+    if (user) navigate('/conta');
+  }, [user, navigate]);
+
+  if (user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,10 +65,6 @@ const ContaLogin = () => {
         </button>
 
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-4">
-            <User className="w-5 h-5" />
-            <span className="font-semibold">Minha Conta</span>
-          </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {mode === 'login' ? 'Entrar' : 'Criar Conta'}
           </h1>

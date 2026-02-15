@@ -6,6 +6,14 @@ interface CustomerProfile {
   full_name: string | null;
   phone: string | null;
   avatar_url: string | null;
+  gender: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_complement: string | null;
+  address_neighborhood: string | null;
+  address_city: string | null;
+  address_state: string | null;
+  address_zip: string | null;
 }
 
 interface CustomerAuthContextType {
@@ -18,6 +26,8 @@ interface CustomerAuthContextType {
   signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshPoints: () => Promise<void>;
+  updateProfile: (data: Partial<CustomerProfile>) => Promise<{ error: string | null }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
@@ -48,9 +58,9 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
-      .select('full_name, phone, avatar_url')
+      .select('full_name, phone, avatar_url, gender, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip')
       .eq('user_id', userId)
       .maybeSingle();
     setProfile(data as CustomerProfile | null);
@@ -72,6 +82,22 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) await fetchPoints(user.id);
   };
 
+  const refreshProfile = async () => {
+    if (user) await fetchProfile(user.id);
+  };
+
+  const updateProfile = async (data: Partial<CustomerProfile>) => {
+    if (!user) return { error: 'Usuário não autenticado' };
+    const { error } = await supabase
+      .from('profiles')
+      .update(data as any)
+      .eq('user_id', user.id);
+    if (!error) {
+      await fetchProfile(user.id);
+    }
+    return { error: error?.message ?? null };
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -80,7 +106,6 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        // Use setTimeout to avoid Supabase auth deadlock
         setTimeout(async () => {
           if (!mounted) return;
           await fetchProfile(u.id);
@@ -134,7 +159,6 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (error) return { error: error.message };
 
-    // Create profile
     if (data.user) {
       await supabase.from('profiles').insert({
         user_id: data.user.id,
@@ -156,7 +180,7 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CustomerAuthContext.Provider value={{
       user, profile, loading, loyaltyPoints, loyaltyActive,
-      signIn, signUp, signOut, refreshPoints,
+      signIn, signUp, signOut, refreshPoints, updateProfile, refreshProfile,
     }}>
       {children}
     </CustomerAuthContext.Provider>

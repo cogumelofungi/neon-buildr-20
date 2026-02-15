@@ -23,10 +23,11 @@ const Navbar = () => {
       <div className="container flex items-center justify-between h-16 px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold">
-            <span className="text-gradient-burger">Burger</span>
-            <span className="text-foreground"> & </span>
-            <span className="text-gradient-acai">Açaí</span>
+          <span className="text-xl font-extrabold tracking-tight" style={{
+            textShadow: '0 1px 2px hsl(20 20% 15% / 0.15), 0 2px 4px hsl(25 95% 50% / 0.1)',
+          }}>
+            <span className="text-gradient-burger">Sena's</span>
+            <span className="text-foreground"> Burgers</span>
           </span>
         </Link>
 
