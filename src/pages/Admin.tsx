@@ -68,6 +68,27 @@ interface Addon {
   created_at: string;
 }
 
+interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  points_required: number;
+  reward_type: string;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+const REWARD_TYPES = [
+  { value: 'free_delivery', label: 'Frete Grátis' },
+  { value: 'free_item', label: 'Item Grátis' },
+  { value: 'discount_10', label: 'Desconto 10%' },
+  { value: 'discount_20', label: 'Desconto 20%' },
+  { value: 'discount_50', label: 'Desconto 50%' },
+  { value: 'custom', label: 'Personalizado' },
+];
+
 const Admin = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -77,7 +98,8 @@ const Admin = () => {
   const [upsells, setUpsells] = useState<Upsell[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [addons, setAddons] = useState<Addon[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'upsells' | 'promotions' | 'addons'>('products');
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'upsells' | 'promotions' | 'addons' | 'rewards'>('products');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
@@ -109,6 +131,13 @@ const Admin = () => {
   const [addonForm, setAddonForm] = useState({ name: '', price: '', category_id: '' });
   const [addonCategoryFilter, setAddonCategoryFilter] = useState<string>('all');
 
+  // Reward form
+  const [showRewardForm, setShowRewardForm] = useState(false);
+  const [editingReward, setEditingReward] = useState<Reward | null>(null);
+  const [rewardForm, setRewardForm] = useState({
+    name: '', description: '', points_required: '', reward_type: 'free_delivery', is_active: true
+  });
+
   // Promotion form
   const [showPromoForm, setShowPromoForm] = useState(false);
   const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
@@ -131,18 +160,20 @@ const Admin = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [catRes, prodRes, upsellRes, promoRes, addonRes] = await Promise.all([
+    const [catRes, prodRes, upsellRes, promoRes, addonRes, rewardRes] = await Promise.all([
       supabase.from('categories').select('*').order('sort_order'),
       supabase.from('products').select('*').order('sort_order'),
       (supabase as any).from('product_upsells').select('*').order('sort_order'),
       (supabase as any).from('promotions').select('*').order('sort_order'),
       (supabase as any).from('product_addons').select('*').order('sort_order'),
+      (supabase as any).from('rewards').select('*').order('sort_order'),
     ]);
     if (catRes.data) setCategories(catRes.data);
     if (prodRes.data) setProducts(prodRes.data);
     if (upsellRes.data) setUpsells(upsellRes.data);
     if (promoRes.data) setPromotions(promoRes.data as unknown as Promotion[]);
     if (addonRes.data) setAddons(addonRes.data as unknown as Addon[]);
+    if (rewardRes.data) setRewards(rewardRes.data as unknown as Reward[]);
     setLoading(false);
   };
 
@@ -414,6 +445,62 @@ const Admin = () => {
     setShowAddonForm(false);
   };
 
+  // Reward CRUD
+  const handleRewardSubmit = async () => {
+    if (!rewardForm.name || !rewardForm.points_required || !rewardForm.reward_type) {
+      toast({ title: 'Preencha nome, pontos e tipo', variant: 'destructive' });
+      return;
+    }
+
+    const payload = {
+      name: rewardForm.name,
+      description: rewardForm.description,
+      points_required: parseInt(rewardForm.points_required),
+      reward_type: rewardForm.reward_type,
+      is_active: rewardForm.is_active,
+    };
+
+    if (editingReward) {
+      const { error } = await (supabase as any).from('rewards').update(payload).eq('id', editingReward.id);
+      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+      toast({ title: 'Recompensa atualizada!' });
+    } else {
+      const { error } = await (supabase as any).from('rewards').insert(payload);
+      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+      toast({ title: 'Recompensa criada!' });
+    }
+
+    resetRewardForm();
+    fetchData();
+  };
+
+  const deleteReward = async (id: string) => {
+    const { error } = await (supabase as any).from('rewards').delete().eq('id', id);
+    if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Recompensa removida!' });
+    fetchData();
+  };
+
+  const editReward = (r: Reward) => {
+    setEditingReward(r);
+    setRewardForm({
+      name: r.name,
+      description: r.description || '',
+      points_required: String(r.points_required),
+      reward_type: r.reward_type || 'custom',
+      is_active: r.is_active,
+    });
+    setShowRewardForm(true);
+  };
+
+  const resetRewardForm = () => {
+    setRewardForm({ name: '', description: '', points_required: '', reward_type: 'free_delivery', is_active: true });
+    setEditingReward(null);
+    setShowRewardForm(false);
+  };
+
+  const getRewardTypeLabel = (type: string) => REWARD_TYPES.find(t => t.value === type)?.label || type;
+
   // Promotion CRUD
   const handlePromoSubmit = async () => {
     let imageUrl = promoForm.image_url;
@@ -568,6 +655,13 @@ const Admin = () => {
             className={activeTab === 'promotions' ? 'gradient-burger text-primary-foreground' : ''}
           >
             <Tag className="w-4 h-4 mr-2" /> Promoções
+          </Button>
+          <Button
+            variant={activeTab === 'rewards' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('rewards')}
+            className={activeTab === 'rewards' ? 'gradient-burger text-primary-foreground' : ''}
+          >
+            <Star className="w-4 h-4 mr-2" /> Recompensas
           </Button>
         </div>
 
@@ -1331,6 +1425,125 @@ const Admin = () => {
                 <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>Nenhuma promoção cadastrada</p>
                 <p className="text-sm mt-1">Crie promoções para atrair mais clientes</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* REWARDS TAB */}
+        {activeTab === 'rewards' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-foreground">Recompensas de Fidelidade</h2>
+              <Button onClick={() => { resetRewardForm(); setShowRewardForm(true); }} className="gradient-burger text-primary-foreground">
+                <Plus className="w-4 h-4 mr-2" /> Nova Recompensa
+              </Button>
+            </div>
+
+            {showRewardForm && (
+              <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+                <h3 className="font-semibold text-foreground mb-4">
+                  {editingReward ? 'Editar Recompensa' : 'Nova Recompensa'}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    placeholder="Nome da recompensa"
+                    value={rewardForm.name}
+                    onChange={e => setRewardForm(f => ({ ...f, name: e.target.value }))}
+                    className="bg-background border-border"
+                  />
+                  <Input
+                    placeholder="Pontos necessários"
+                    type="number"
+                    value={rewardForm.points_required}
+                    onChange={e => setRewardForm(f => ({ ...f, points_required: e.target.value }))}
+                    className="bg-background border-border"
+                  />
+                  <select
+                    value={rewardForm.reward_type}
+                    onChange={e => setRewardForm(f => ({ ...f, reward_type: e.target.value }))}
+                    className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  >
+                    {REWARD_TYPES.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={rewardForm.is_active}
+                      onChange={e => setRewardForm(f => ({ ...f, is_active: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-foreground">Ativa</span>
+                  </div>
+                  <Input
+                    placeholder="Descrição (opcional)"
+                    value={rewardForm.description}
+                    onChange={e => setRewardForm(f => ({ ...f, description: e.target.value }))}
+                    className="bg-background border-border sm:col-span-2"
+                  />
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={handleRewardSubmit} className="gradient-burger text-primary-foreground">
+                    <Save className="w-4 h-4 mr-2" /> {editingReward ? 'Atualizar' : 'Criar'}
+                  </Button>
+                  <Button variant="outline" onClick={resetRewardForm}>
+                    <X className="w-4 h-4 mr-2" /> Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {rewards.map(r => (
+                <div key={r.id} className={cn(
+                  'bg-card border rounded-2xl p-5 flex items-start gap-4',
+                  r.is_active ? 'border-border' : 'border-destructive/30 opacity-60'
+                )}>
+                  <div className={cn(
+                    'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
+                    r.is_active ? 'bg-primary/15' : 'bg-muted'
+                  )}>
+                    <Gift className={cn('w-5 h-5', r.is_active ? 'text-primary' : 'text-muted-foreground')} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-foreground text-sm">{r.name}</h4>
+                        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          {getRewardTypeLabel(r.reward_type || 'custom')}
+                        </span>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => editReward(r)}>
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteReward(r.id)} className="hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {r.description && (
+                      <p className="text-xs text-muted-foreground mt-1">{r.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Star className="w-3 h-3 text-primary" />
+                      <span className="text-sm font-bold text-primary">{r.points_required} pontos</span>
+                      {!r.is_active && (
+                        <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">Inativa</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {rewards.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Star className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>Nenhuma recompensa cadastrada</p>
+                <p className="text-sm mt-1">Crie recompensas para o programa de fidelidade</p>
               </div>
             )}
           </div>
