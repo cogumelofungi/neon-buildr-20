@@ -10,6 +10,8 @@ interface SaveOrderParams {
   deliveryType: string;
   address: string;
   observation: string;
+  customerName?: string;
+  customerPhone?: string;
 }
 
 export const saveCustomerOrder = async (params: SaveOrderParams) => {
