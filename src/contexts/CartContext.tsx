@@ -1,12 +1,20 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { MenuItem } from '@/types/menu';
 
+export interface CartAddon {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 export interface CartItem {
   id: string;
   item: MenuItem;
   quantity: number;
   addBatata: boolean;
   bebida: { id: string; name: string; price: number } | null;
+  addons?: CartAddon[];
   totalPrice: number;
 }
 
