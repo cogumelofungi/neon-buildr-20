@@ -18,7 +18,15 @@ import Admin from "./pages/Admin";
 import Loja from "./pages/Loja";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   // Force dark theme

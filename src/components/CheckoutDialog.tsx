@@ -183,10 +183,16 @@ const CheckoutDialog = ({ open, onOpenChange, items, total, onConfirm }: Checkou
               <span>{formatPrice(total)}</span>
             </div>
             {deliveryType === 'delivery' && (
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Taxa de entrega</span>
-                <span>{formatPrice(DELIVERY_FEE)}</span>
-              </div>
+              <>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Taxa de entrega</span>
+                  <span>{formatPrice(DELIVERY_FEE)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Previsão de entrega</span>
+                  <span>~50 min</span>
+                </div>
+              </>
             )}
             <div className="border-t border-border pt-2 flex justify-between font-bold text-foreground">
               <span>Total</span>

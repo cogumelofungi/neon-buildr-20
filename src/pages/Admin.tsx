@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import {
   Plus, Trash2, Edit2, LogOut, Save, X, Image as ImageIcon,
-  LayoutGrid, Package, Upload, Star, StarOff, Gift, Tag
+  LayoutGrid, Package, Upload, Star, StarOff, Gift, Tag, Layers, ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +58,16 @@ interface Promotion {
   created_at: string;
 }
 
+interface Addon {
+  id: string;
+  name: string;
+  price: number;
+  category_id: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 const Admin = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -66,7 +76,8 @@ const Admin = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [upsells, setUpsells] = useState<Upsell[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'upsells' | 'promotions'>('products');
+  const [addons, setAddons] = useState<Addon[]>([]);
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'upsells' | 'promotions' | 'addons'>('products');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
@@ -89,6 +100,14 @@ const Admin = () => {
   const [upsellForm, setUpsellForm] = useState({
     product_id: '', upsell_product_id: '', extra_price: '', label: ''
   });
+  const [upsellCategoryFilter, setUpsellCategoryFilter] = useState<string>('all');
+  const [upsellApplyToCategory, setUpsellApplyToCategory] = useState(false);
+
+  // Addon form
+  const [showAddonForm, setShowAddonForm] = useState(false);
+  const [editingAddon, setEditingAddon] = useState<Addon | null>(null);
+  const [addonForm, setAddonForm] = useState({ name: '', price: '', category_id: '' });
+  const [addonCategoryFilter, setAddonCategoryFilter] = useState<string>('all');
 
   // Promotion form
   const [showPromoForm, setShowPromoForm] = useState(false);
@@ -112,16 +131,18 @@ const Admin = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [catRes, prodRes, upsellRes, promoRes] = await Promise.all([
+    const [catRes, prodRes, upsellRes, promoRes, addonRes] = await Promise.all([
       supabase.from('categories').select('*').order('sort_order'),
       supabase.from('products').select('*').order('sort_order'),
-      supabase.from('product_upsells').select('*').order('sort_order'),
+      (supabase as any).from('product_upsells').select('*').order('sort_order'),
       (supabase as any).from('promotions').select('*').order('sort_order'),
+      (supabase as any).from('product_addons').select('*').order('sort_order'),
     ]);
     if (catRes.data) setCategories(catRes.data);
     if (prodRes.data) setProducts(prodRes.data);
     if (upsellRes.data) setUpsells(upsellRes.data);
     if (promoRes.data) setPromotions(promoRes.data as unknown as Promotion[]);
+    if (addonRes.data) setAddons(addonRes.data as unknown as Addon[]);
     setLoading(false);
   };
 
@@ -139,33 +160,58 @@ const Admin = () => {
 
   // Product CRUD
   const handleProductSubmit = async () => {
-    let imageUrl = productForm.image_url;
-    if (imageFile) {
-      const url = await uploadImage(imageFile);
-      if (url) imageUrl = url;
+    try {
+      console.log('handleProductSubmit called', productForm);
+      
+      if (!productForm.name || !productForm.price || !productForm.category_id) {
+        toast({ title: 'Preencha nome, preço e categoria', variant: 'destructive' });
+        console.log('Validation failed:', { name: productForm.name, price: productForm.price, category_id: productForm.category_id });
+        return;
+      }
+
+      let imageUrl = productForm.image_url;
+      if (imageFile) {
+        const url = await uploadImage(imageFile);
+        if (url) imageUrl = url;
+      }
+
+      const payload = {
+        name: productForm.name,
+        description: productForm.description,
+        price: parseFloat(productForm.price),
+        category_id: productForm.category_id,
+        is_popular: productForm.is_popular,
+        image_url: imageUrl || null,
+      };
+
+      console.log('Product payload:', payload);
+
+      if (editingProduct) {
+        const { error } = await supabase.from('products').update(payload).eq('id', editingProduct.id);
+        if (error) { console.error('Product update error:', error); toast({ title: 'Erro ao atualizar', description: error.message, variant: 'destructive' }); return; }
+        toast({ title: 'Produto atualizado!' });
+      } else {
+        const { data, error } = await supabase.from('products').insert(payload).select();
+        console.log('Product insert result:', { data, error });
+        if (error) { 
+          console.error('Product insert error:', error); 
+          toast({ title: 'Erro ao criar produto', description: error.message, variant: 'destructive' }); 
+          return; 
+        }
+        if (!data || data.length === 0) {
+          console.error('Product insert returned no data - possible RLS issue');
+          toast({ title: 'Erro ao criar produto', description: 'Sem permissão. Verifique se você está logado como admin.', variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Produto criado!' });
+      }
+
+      resetProductForm();
+      fetchData();
+    } catch (err) {
+      console.error('handleProductSubmit unexpected error:', err);
+      toast({ title: 'Erro inesperado', description: String(err), variant: 'destructive' });
     }
-
-    const payload = {
-      name: productForm.name,
-      description: productForm.description,
-      price: parseFloat(productForm.price),
-      category_id: productForm.category_id,
-      is_popular: productForm.is_popular,
-      image_url: imageUrl || null,
-    };
-
-    if (editingProduct) {
-      const { error } = await supabase.from('products').update(payload).eq('id', editingProduct.id);
-      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
-      toast({ title: 'Produto atualizado!' });
-    } else {
-      const { error } = await supabase.from('products').insert(payload);
-      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
-      toast({ title: 'Produto criado!' });
-    }
-
-    resetProductForm();
-    fetchData();
   };
 
   const deleteProduct = async (id: string) => {
@@ -197,15 +243,21 @@ const Admin = () => {
 
   // Category CRUD
   const handleCategorySubmit = async () => {
+    console.log('handleCategorySubmit called', categoryForm);
+    if (!categoryForm.name || !categoryForm.slug) {
+      toast({ title: 'Preencha todos os campos', variant: 'destructive' });
+      return;
+    }
     const payload = { name: categoryForm.name, slug: categoryForm.slug, icon: categoryForm.icon };
 
     if (editingCategory) {
       const { error } = await supabase.from('categories').update(payload).eq('id', editingCategory.id);
-      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+      if (error) { console.error('Category update error:', error); toast({ title: 'Erro ao atualizar categoria', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Categoria atualizada!' });
     } else {
-      const { error } = await supabase.from('categories').insert(payload);
-      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+      const { data, error } = await supabase.from('categories').insert(payload).select();
+      console.log('Category insert result:', { data, error });
+      if (error) { toast({ title: 'Erro ao criar categoria', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Categoria criada!' });
     }
 
@@ -234,21 +286,52 @@ const Admin = () => {
 
   // Upsell CRUD
   const handleUpsellSubmit = async () => {
-    const payload = {
-      product_id: upsellForm.product_id,
-      upsell_product_id: upsellForm.upsell_product_id,
-      extra_price: parseFloat(upsellForm.extra_price),
-      label: upsellForm.label,
-    };
+    if (!upsellForm.upsell_product_id || !upsellForm.extra_price || !upsellForm.label) {
+      toast({ title: 'Preencha todos os campos', variant: 'destructive' });
+      return;
+    }
 
-    if (editingUpsell) {
-      const { error } = await supabase.from('product_upsells').update(payload).eq('id', editingUpsell.id);
+    if (upsellApplyToCategory && upsellCategoryFilter !== 'all' && !editingUpsell) {
+      // Bulk create for all products in the selected category
+      const categoryProducts = products.filter(p => p.category_id === upsellCategoryFilter && p.id !== upsellForm.upsell_product_id);
+      
+      if (categoryProducts.length === 0) {
+        toast({ title: 'Nenhum produto nessa categoria', variant: 'destructive' });
+        return;
+      }
+
+      const payloads = categoryProducts.map(p => ({
+        product_id: p.id,
+        upsell_product_id: upsellForm.upsell_product_id,
+        extra_price: parseFloat(upsellForm.extra_price),
+        label: upsellForm.label,
+      }));
+
+      const { error } = await (supabase as any).from('product_upsells').insert(payloads);
       if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
-      toast({ title: 'Oferta atualizada!' });
+      toast({ title: `Oferta criada para ${categoryProducts.length} produtos!` });
     } else {
-      const { error } = await supabase.from('product_upsells').insert(payload);
-      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
-      toast({ title: 'Oferta criada!' });
+      if (!upsellForm.product_id && !upsellApplyToCategory) {
+        toast({ title: 'Selecione um produto principal', variant: 'destructive' });
+        return;
+      }
+
+      const payload = {
+        product_id: upsellForm.product_id,
+        upsell_product_id: upsellForm.upsell_product_id,
+        extra_price: parseFloat(upsellForm.extra_price),
+        label: upsellForm.label,
+      };
+
+      if (editingUpsell) {
+        const { error } = await (supabase as any).from('product_upsells').update(payload).eq('id', editingUpsell.id);
+        if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+        toast({ title: 'Oferta atualizada!' });
+      } else {
+        const { error } = await (supabase as any).from('product_upsells').insert(payload);
+        if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+        toast({ title: 'Oferta criada!' });
+      }
     }
 
     resetUpsellForm();
@@ -256,7 +339,7 @@ const Admin = () => {
   };
 
   const deleteUpsell = async (id: string) => {
-    const { error } = await supabase.from('product_upsells').delete().eq('id', id);
+    const { error } = await (supabase as any).from('product_upsells').delete().eq('id', id);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Oferta removida!' });
     fetchData();
@@ -264,6 +347,7 @@ const Admin = () => {
 
   const editUpsell = (u: Upsell) => {
     setEditingUpsell(u);
+    setUpsellApplyToCategory(false);
     setUpsellForm({
       product_id: u.product_id,
       upsell_product_id: u.upsell_product_id,
@@ -276,7 +360,58 @@ const Admin = () => {
   const resetUpsellForm = () => {
     setUpsellForm({ product_id: '', upsell_product_id: '', extra_price: '', label: '' });
     setEditingUpsell(null);
+    setUpsellApplyToCategory(false);
     setShowUpsellForm(false);
+  };
+
+  // Addon CRUD
+  const handleAddonSubmit = async () => {
+    if (!addonForm.name || !addonForm.price || !addonForm.category_id) {
+      toast({ title: 'Preencha nome, preço e categoria', variant: 'destructive' });
+      return;
+    }
+
+    const payload = {
+      name: addonForm.name,
+      price: parseFloat(addonForm.price),
+      category_id: addonForm.category_id,
+    };
+
+    if (editingAddon) {
+      const { error } = await (supabase as any).from('product_addons').update(payload).eq('id', editingAddon.id);
+      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+      toast({ title: 'Adicional atualizado!' });
+    } else {
+      const { error } = await (supabase as any).from('product_addons').insert(payload);
+      if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+      toast({ title: 'Adicional criado!' });
+    }
+
+    resetAddonForm();
+    fetchData();
+  };
+
+  const deleteAddon = async (id: string) => {
+    const { error } = await (supabase as any).from('product_addons').delete().eq('id', id);
+    if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Adicional removido!' });
+    fetchData();
+  };
+
+  const editAddon = (a: Addon) => {
+    setEditingAddon(a);
+    setAddonForm({
+      name: a.name,
+      price: String(a.price),
+      category_id: a.category_id,
+    });
+    setShowAddonForm(true);
+  };
+
+  const resetAddonForm = () => {
+    setAddonForm({ name: '', price: '', category_id: '' });
+    setEditingAddon(null);
+    setShowAddonForm(false);
   };
 
   // Promotion CRUD
@@ -350,6 +485,14 @@ const Admin = () => {
     ? products
     : products.filter(p => p.category_id === selectedCategory);
 
+  const upsellFilteredProducts = upsellCategoryFilter === 'all'
+    ? products
+    : products.filter(p => p.category_id === upsellCategoryFilter);
+
+  const filteredAddons = addonCategoryFilter === 'all'
+    ? addons
+    : addons.filter(a => a.category_id === addonCategoryFilter);
+
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name ?? '';
   const getProductName = (id: string) => products.find(p => p.id === id)?.name ?? '';
 
@@ -377,9 +520,14 @@ const Admin = () => {
           <h1 className="text-xl font-bold text-foreground">
             Painel <span className="text-gradient-burger">Admin</span>
           </h1>
-          <Button variant="ghost" onClick={() => { signOut(); navigate('/'); }}>
-            <LogOut className="w-4 h-4 mr-2" /> Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/pedidos')}>
+              <ClipboardList className="w-4 h-4 mr-2" /> Pedidos
+            </Button>
+            <Button variant="ghost" onClick={() => { signOut(); navigate('/'); }}>
+              <LogOut className="w-4 h-4 mr-2" /> Sair
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -406,6 +554,13 @@ const Admin = () => {
             className={activeTab === 'upsells' ? 'gradient-burger text-primary-foreground' : ''}
           >
             <Gift className="w-4 h-4 mr-2" /> Ofertas Combo
+          </Button>
+          <Button
+            variant={activeTab === 'addons' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('addons')}
+            className={activeTab === 'addons' ? 'gradient-burger text-primary-foreground' : ''}
+          >
+            <Layers className="w-4 h-4 mr-2" /> Adicionais
           </Button>
           <Button
             variant={activeTab === 'promotions' ? 'default' : 'outline'}
@@ -694,19 +849,72 @@ const Admin = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground mb-1 block">Produto principal</label>
-                    <select
-                      value={upsellForm.product_id}
-                      onChange={e => setUpsellForm(f => ({ ...f, product_id: e.target.value }))}
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                      <option value="">Selecione o produto...</option>
-                      {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.name} - {formatPrice(Number(p.price))}</option>
+                  {/* Category filter for product selection */}
+                  <div className="md:col-span-2">
+                    <label className="text-sm text-muted-foreground mb-1 block">Filtrar por categoria</label>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={upsellCategoryFilter === 'all' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setUpsellCategoryFilter('all'); setUpsellApplyToCategory(false); }}
+                        className={upsellCategoryFilter === 'all' ? 'gradient-burger text-primary-foreground' : ''}
+                      >
+                        Todos
+                      </Button>
+                      {categories.map(c => (
+                        <Button
+                          key={c.id}
+                          type="button"
+                          variant={upsellCategoryFilter === c.id ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setUpsellCategoryFilter(c.id)}
+                          className={upsellCategoryFilter === c.id ? 'gradient-burger text-primary-foreground' : ''}
+                        >
+                          {c.name}
+                        </Button>
                       ))}
-                    </select>
+                    </div>
                   </div>
+
+                  {/* Apply to all in category toggle */}
+                  {!editingUpsell && upsellCategoryFilter !== 'all' && (
+                    <div className="md:col-span-2">
+                      <button
+                        type="button"
+                        onClick={() => setUpsellApplyToCategory(!upsellApplyToCategory)}
+                        className={cn(
+                          'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm',
+                          upsellApplyToCategory
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/50'
+                        )}
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                        {upsellApplyToCategory
+                          ? `✅ Aplicar para todos os ${getCategoryName(upsellCategoryFilter)} (${upsellFilteredProducts.length} produtos)`
+                          : `Aplicar para todos os "${getCategoryName(upsellCategoryFilter)}" da categoria`}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Product principal - hidden when applying to category */}
+                  {!upsellApplyToCategory && (
+                    <div>
+                      <label className="text-sm text-muted-foreground mb-1 block">Produto principal</label>
+                      <select
+                        value={upsellForm.product_id}
+                        onChange={e => setUpsellForm(f => ({ ...f, product_id: e.target.value }))}
+                        className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="">Selecione o produto...</option>
+                        {upsellFilteredProducts.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} - {formatPrice(Number(p.price))}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Produto adicional (oferta)</label>
                     <select
@@ -744,16 +952,46 @@ const Admin = () => {
 
                 <div className="flex gap-2 mt-6">
                   <Button onClick={handleUpsellSubmit} className="gradient-burger text-primary-foreground">
-                    <Save className="w-4 h-4 mr-2" /> {editingUpsell ? 'Salvar' : 'Criar'}
+                    <Save className="w-4 h-4 mr-2" /> {editingUpsell ? 'Salvar' : upsellApplyToCategory ? `Criar para ${upsellFilteredProducts.length} produtos` : 'Criar'}
                   </Button>
                   <Button variant="outline" onClick={resetUpsellForm}>Cancelar</Button>
                 </div>
               </div>
             )}
 
+            {/* Upsell category filter for list */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="text-sm text-muted-foreground flex items-center mr-2">Filtrar lista:</span>
+              <Button
+                variant={upsellCategoryFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setUpsellCategoryFilter('all')}
+                className={cn('h-7 text-xs', upsellCategoryFilter === 'all' ? 'gradient-burger text-primary-foreground' : '')}
+              >
+                Todos
+              </Button>
+              {categories.map(c => (
+                <Button
+                  key={c.id}
+                  variant={upsellCategoryFilter === c.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setUpsellCategoryFilter(c.id)}
+                  className={cn('h-7 text-xs', upsellCategoryFilter === c.id ? 'gradient-burger text-primary-foreground' : '')}
+                >
+                  {c.name}
+                </Button>
+              ))}
+            </div>
+
             {/* Upsells List */}
             <div className="space-y-3">
-              {upsells.map(u => (
+              {upsells
+                .filter(u => {
+                  if (upsellCategoryFilter === 'all') return true;
+                  const product = products.find(p => p.id === u.product_id);
+                  return product?.category_id === upsellCategoryFilter;
+                })
+                .map(u => (
                 <div key={u.id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -766,6 +1004,9 @@ const Admin = () => {
                         + {formatPrice(Number(u.extra_price))}
                       </span>
                       <span className="text-sm text-muted-foreground">"{u.label}"</span>
+                      <span className="text-xs text-muted-foreground/60">
+                        {getCategoryName(products.find(p => p.id === u.product_id)?.category_id || '')}
+                      </span>
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -785,6 +1026,138 @@ const Admin = () => {
                 <Gift className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>Nenhuma oferta combo cadastrada</p>
                 <p className="text-sm mt-1">Crie ofertas para sugerir produtos adicionais aos clientes</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ADDONS TAB */}
+        {activeTab === 'addons' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Adicionais</h2>
+                <p className="text-sm text-muted-foreground">
+                  Configure extras que o cliente pode adicionar. Cada adicional vale para todos os produtos da categoria selecionada.
+                </p>
+              </div>
+              <Button onClick={() => { resetAddonForm(); setShowAddonForm(true); }} className="gradient-burger text-primary-foreground">
+                <Plus className="w-4 h-4 mr-2" /> Novo Adicional
+              </Button>
+            </div>
+
+            {showAddonForm && (
+              <div className="bg-card border border-border rounded-xl p-6 mb-6 animate-fade-in">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {editingAddon ? 'Editar Adicional' : 'Novo Adicional'}
+                  </h3>
+                  <Button variant="ghost" size="icon" onClick={resetAddonForm}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Nome do adicional</label>
+                    <Input
+                      value={addonForm.name}
+                      onChange={e => setAddonForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="Ex: Bacon extra, Queijo cheddar..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Preço (R$)</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={addonForm.price}
+                      onChange={e => setAddonForm(f => ({ ...f, price: e.target.value }))}
+                      placeholder="5.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Categoria (aplica a todos da categoria)</label>
+                    <select
+                      value={addonForm.category_id}
+                      onChange={e => setAddonForm(f => ({ ...f, category_id: e.target.value }))}
+                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">Selecione a categoria...</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name} ({products.filter(p => p.category_id === c.id).length} produtos)</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      O adicional ficará disponível para todos os produtos desta categoria
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-6">
+                  <Button onClick={handleAddonSubmit} className="gradient-burger text-primary-foreground">
+                    <Save className="w-4 h-4 mr-2" /> {editingAddon ? 'Salvar' : 'Criar'}
+                  </Button>
+                  <Button variant="outline" onClick={resetAddonForm}>Cancelar</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Addon category filter */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button
+                variant={addonCategoryFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddonCategoryFilter('all')}
+                className={addonCategoryFilter === 'all' ? 'gradient-burger text-primary-foreground' : ''}
+              >
+                Todos
+              </Button>
+              {categories.map(c => (
+                <Button
+                  key={c.id}
+                  variant={addonCategoryFilter === c.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAddonCategoryFilter(c.id)}
+                  className={addonCategoryFilter === c.id ? 'gradient-burger text-primary-foreground' : ''}
+                >
+                  {c.name} ({addons.filter(a => a.category_id === c.id).length})
+                </Button>
+              ))}
+            </div>
+
+            {/* Addons List */}
+            <div className="space-y-3">
+              {filteredAddons.map(a => (
+                <div key={a.id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-foreground">{a.name}</span>
+                      <span className="text-sm px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                        + {formatPrice(Number(a.price))}
+                      </span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      Categoria: {getCategoryName(a.category_id)} · Aplica a {products.filter(p => p.category_id === a.category_id).length} produtos
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => editAddon(a)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteAddon(a.id)} className="hover:text-destructive">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredAddons.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Layers className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>Nenhum adicional cadastrado</p>
+                <p className="text-sm mt-1">Crie adicionais como bacon extra, queijo cheddar, etc. e associe a uma categoria</p>
               </div>
             )}
           </div>

@@ -18,44 +18,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAdmin = async (userId: string) => {
-    const { data } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
-    setIsAdmin(!!data);
+    try {
+      const { data, error } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+      if (error) {
+        console.error('checkAdmin RPC error:', error);
+        setIsAdmin(false);
+        return;
+      }
+      setIsAdmin(!!data);
+    } catch (e) {
+      console.error('checkAdmin exception:', e);
+      setIsAdmin(false);
+    }
   };
 
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        try {
-          await checkAdmin(u.id);
-        } catch (e) {
-          console.error('Error checking admin role:', e);
-        }
-      } else {
-        setIsAdmin(false);
-      }
-      if (mounted) setLoading(false);
-    });
+    // Listener for ONGOING auth changes (does NOT control loading)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        const u = session?.user ?? null;
+        setUser(u);
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        try {
-          await checkAdmin(u.id);
-        } catch (e) {
-          console.error('Error checking admin role:', e);
+        if (u) {
+          // Use setTimeout to avoid Supabase auth deadlock
+          setTimeout(() => {
+            if (!mounted) return;
+            checkAdmin(u.id).catch(e => console.error('Error checking admin role:', e));
+          }, 0);
+        } else {
+          setIsAdmin(false);
         }
       }
-      if (mounted) setLoading(false);
-    }).catch(() => {
-      if (mounted) setLoading(false);
-    });
+    );
+
+    // INITIAL load (controls loading state)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) {
+          await checkAdmin(u.id);
+        }
+      } catch (e) {
+        console.error('Auth init error:', e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     // Fallback: ensure loading resolves even if auth hangs
     const timeout = setTimeout(() => {
@@ -72,14 +88,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setLoading(false);
         return { error: error.message };
       }
-      // onAuthStateChange will handle setting loading to false on success
-      // But add a safety timeout
-      setTimeout(() => setLoading(false), 5000);
+      // Manually check admin and set loading false after sign in
+      if (data.user) {
+        await checkAdmin(data.user.id);
+      }
+      setLoading(false);
       return { error: null };
     } catch (e: any) {
       setLoading(false);

@@ -25,14 +25,19 @@ const Promocoes = () => {
 
   useEffect(() => {
     const fetchPromotions = async () => {
-      const { data, error } = await (supabase as any)
-        .from('promotions')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-      if (data) setPromotions(data as unknown as Promotion[]);
-      if (error) console.error('Error fetching promotions:', error);
-      setLoading(false);
+      try {
+        const { data, error } = await (supabase as any)
+          .from('promotions')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order');
+        if (data) setPromotions(data as unknown as Promotion[]);
+        if (error) console.error('Error fetching promotions:', error);
+      } catch (e) {
+        console.error('Failed to fetch promotions:', e);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchPromotions();
   }, []);
@@ -79,11 +84,7 @@ const Promocoes = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-4">
-            <Tag className="w-5 h-5" />
-            <span className="font-semibold">Promoções do Dia</span>
-          </div>
+        <div className="text-center mb-10 pt-8">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Ofertas <span className="text-gradient-burger">Imperdíveis</span>
           </h1>

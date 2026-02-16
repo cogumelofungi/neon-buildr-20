@@ -1,23 +1,9 @@
-import { useState, useMemo } from 'react';
-import { useCategories, useProducts } from '@/hooks/use-products';
-import CategoryButton from './CategoryButton';
+import { useProducts } from '@/hooks/use-products';
 import MenuItemCard from './MenuItemCard';
 import { Loader2 } from 'lucide-react';
 
 const MenuSection = () => {
-  const { data: categories = [], isLoading: catLoading } = useCategories();
-  const { data: products = [], isLoading: prodLoading } = useProducts();
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  // Set first category as active once loaded
-  const activeCat = activeCategory ?? categories[0]?.id ?? null;
-
-  const filteredItems = useMemo(() => {
-    if (!activeCat) return [];
-    return products.filter((item) => item.category_id === activeCat);
-  }, [activeCat, products]);
-
-  const isLoading = catLoading || prodLoading;
+  const { data: products = [], isLoading } = useProducts();
 
   return (
     <section id="menu" className="py-16 px-4">
@@ -35,34 +21,18 @@ const MenuSection = () => {
           <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              Nenhum item encontrado.
+            </p>
+          </div>
         ) : (
-          <>
-            <div className="flex flex-wrap justify-center gap-3 mb-12">
-              {categories.map((category) => (
-                <CategoryButton
-                  key={category.id}
-                  name={category.name}
-                  icon={category.icon}
-                  isActive={activeCat === category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                />
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItems.map((item, index) => (
-                <MenuItemCard key={item.id} item={item} index={index} />
-              ))}
-            </div>
-
-            {filteredItems.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">
-                  Nenhum item encontrado nesta categoria.
-                </p>
-              </div>
-            )}
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((item, index) => (
+              <MenuItemCard key={item.id} item={item} index={index} />
+            ))}
+          </div>
         )}
       </div>
     </section>

@@ -6,11 +6,11 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import CheckoutDialog, { CheckoutData } from '@/components/CheckoutDialog';
-import { saveCustomerOrder, awardLoyaltyPoints } from '@/lib/order-service';
+import { saveCustomerOrder } from '@/lib/order-service';
 
 const Carrinho = () => {
   const { items, removeItem, updateQuantity, clearCart, getTotal, addOrder } = useCart();
-  const { user, loyaltyActive, refreshPoints } = useCustomerAuth();
+  const { user, profile } = useCustomerAuth();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -33,12 +33,10 @@ const Carrinho = () => {
 
     const finalTotal = getTotal() + data.deliveryFee;
 
-    let message = `Recebemos seu pedido e ele está sendo preparado 🤩\n\n`;
-    message += `*Pedido nº ${orderNumber}*\n\n`;
-    message += `*Itens:*\n`;
+    let message = `Pedido nº ${orderNumber}\n\nItens:\n`;
 
     items.forEach((cartItem) => {
-      let itemLine = `➡ ${cartItem.quantity}x ${cartItem.item.name}`;
+      let itemLine = `\n➡ ${cartItem.quantity}x ${cartItem.item.name}`;
       if (cartItem.addBatata || cartItem.bebida) {
         const extras = [
           cartItem.addBatata && '🍟 Batata',
@@ -46,7 +44,11 @@ const Carrinho = () => {
         ].filter(Boolean).join(', ');
         itemLine += ` (${extras})`;
       }
-      message += `\n${itemLine}`;
+      if (cartItem.addons && cartItem.addons.length > 0) {
+        const addonList = cartItem.addons.map(a => `${a.quantity}x ${a.name}`).join(', ');
+        itemLine += `\n   ➕ Adicionais: ${addonList}`;
+      }
+      message += itemLine;
     });
 
     message += `\n\n${paymentLabel[data.paymentMethod] || data.paymentMethod}`;
@@ -54,7 +56,7 @@ const Carrinho = () => {
     if (data.deliveryType === 'delivery') {
       message += `\n\n🛵 Delivery (taxa de: ${formatPrice(data.deliveryFee)})`;
       message += `\n\n🏠 ${data.address}`;
-      message += `\n\n_(Estimativa: entre 30~65 minutos)_`;
+      message += `\n\n(Estimativa: 50 minutos)`;
     } else {
       message += `\n\n🏪 Retirada na loja`;
     }
@@ -63,7 +65,7 @@ const Carrinho = () => {
       message += `\n\n📝 *Obs:* ${data.observation}`;
     }
 
-    message += `\n\n*Total: ${formatPrice(finalTotal)}*`;
+    message += `\n\nTotal: ${formatPrice(finalTotal)}`;
     message += `\n\nObrigado pela preferência, se precisar de algo é só chamar! 😉`;
 
     return encodeURIComponent(message);
@@ -86,7 +88,7 @@ const Carrinho = () => {
 
     // Save to DB if user is logged in
     if (user) {
-      const result = await saveCustomerOrder({
+      await saveCustomerOrder({
         userId: user.id,
         items,
         total: getTotal(),
@@ -95,17 +97,13 @@ const Carrinho = () => {
         deliveryType: data.deliveryType,
         address: data.address,
         observation: data.observation,
+        customerName: profile?.full_name || undefined,
+        customerPhone: profile?.phone || undefined,
       });
-
-      // Award loyalty points
-      if (result && loyaltyActive) {
-        await awardLoyaltyPoints(user.id, result.orderId, result.totalItems);
-        await refreshPoints();
-      }
     }
 
     // Open WhatsApp
-    const phoneNumber = '5511999999999';
+    const phoneNumber = '5584988760462';
     const message = generateWhatsAppMessage(data, orderNumber);
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
 
@@ -115,7 +113,7 @@ const Carrinho = () => {
 
     toast({
       title: 'Pedido enviado!',
-      description: `Pedido nº ${orderNumber} enviado para o WhatsApp.${user && loyaltyActive ? ' Pontos de fidelidade adicionados! ⭐' : ''}`,
+      description: `Pedido nº ${orderNumber} enviado para o WhatsApp.`,
     });
   };
 
@@ -123,11 +121,7 @@ const Carrinho = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-4">
-            <ShoppingCart className="w-5 h-5" />
-            <span className="font-semibold">Carrinho</span>
-          </div>
+        <div className="text-center mb-10 pt-8">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Seu <span className="text-gradient-burger">Pedido</span>
           </h1>
@@ -183,6 +177,11 @@ const Carrinho = () => {
                                 cartItem.addBatata && 'Batata',
                                 cartItem.bebida?.name,
                               ].filter(Boolean).join(' + ')}
+                            </p>
+                          )}
+                          {cartItem.addons && cartItem.addons.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              + {cartItem.addons.map(a => `${a.quantity}x ${a.name}`).join(', ')}
                             </p>
                           )}
                         </div>

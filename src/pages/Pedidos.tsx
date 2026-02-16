@@ -27,11 +27,7 @@ const Pedidos = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-4">
-            <ClipboardList className="w-5 h-5" />
-            <span className="font-semibold">Histórico</span>
-          </div>
+        <div className="text-center mb-10 pt-8">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Meus <span className="text-gradient-burger">Pedidos</span>
           </h1>

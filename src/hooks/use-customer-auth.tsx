@@ -6,26 +6,15 @@ interface CustomerProfile {
   full_name: string | null;
   phone: string | null;
   avatar_url: string | null;
-  gender: string | null;
-  address_street: string | null;
-  address_number: string | null;
-  address_complement: string | null;
-  address_neighborhood: string | null;
-  address_city: string | null;
-  address_state: string | null;
-  address_zip: string | null;
 }
 
 interface CustomerAuthContextType {
   user: User | null;
   profile: CustomerProfile | null;
   loading: boolean;
-  loyaltyPoints: number;
-  loyaltyActive: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  refreshPoints: () => Promise<void>;
   updateProfile: (data: Partial<CustomerProfile>) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
 }
@@ -36,50 +25,18 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [loyaltyActive, setLoyaltyActive] = useState(false);
-
-  // Check if loyalty program is active from localStorage (toggled in /loja)
-  useEffect(() => {
-    const checkLoyalty = () => {
-      try {
-        const saved = localStorage.getItem('senas_store_features');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          setLoyaltyActive(!!parsed['loyalty_program']);
-        }
-      } catch {
-        setLoyaltyActive(false);
-      }
-    };
-    checkLoyalty();
-    window.addEventListener('storage', checkLoyalty);
-    return () => window.removeEventListener('storage', checkLoyalty);
-  }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await (supabase as any)
-      .from('profiles')
-      .select('full_name, phone, avatar_url, gender, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip')
-      .eq('user_id', userId)
-      .maybeSingle();
-    setProfile(data as CustomerProfile | null);
-  };
-
-  const fetchPoints = async (userId: string) => {
-    const { data, error } = await (supabase as any)
-      .from('loyalty_points')
-      .select('points')
-      .eq('user_id', userId);
-    
-    if (!error && data) {
-      const total = (data as any[]).reduce((sum: number, row: any) => sum + (row.points || 0), 0);
-      setLoyaltyPoints(total);
+    try {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('full_name, phone, avatar_url')
+        .eq('user_id', userId)
+        .maybeSingle();
+      setProfile(data as CustomerProfile | null);
+    } catch (e) {
+      console.warn('Failed to fetch profile:', e);
     }
-  };
-
-  const refreshPoints = async () => {
-    if (user) await fetchPoints(user.id);
   };
 
   const refreshProfile = async () => {
@@ -88,7 +45,7 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProfile = async (data: Partial<CustomerProfile>) => {
     if (!user) return { error: 'Usuário não autenticado' };
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('profiles')
       .update(data as any)
       .eq('user_id', user.id);
@@ -101,40 +58,46 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        setTimeout(async () => {
-          if (!mounted) return;
+    // Listener for ONGOING auth changes - NO await to avoid deadlock
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        const u = session?.user ?? null;
+        setUser(u);
+
+        if (u) {
+          setTimeout(() => {
+            if (!mounted) return;
+            fetchProfile(u.id).catch(() => {});
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // INITIAL load (controls loading state)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) {
           await fetchProfile(u.id);
-          await fetchPoints(u.id);
-          if (mounted) setLoading(false);
-        }, 0);
-      } else {
-        setProfile(null);
-        setLoyaltyPoints(0);
+        }
+      } catch (e) {
+        console.error('Customer auth init error:', e);
+      } finally {
         if (mounted) setLoading(false);
       }
-    });
+    };
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        await fetchProfile(u.id);
-        await fetchPoints(u.id);
-      }
-      if (mounted) setLoading(false);
-    }).catch(() => {
-      if (mounted) setLoading(false);
-    });
+    initializeAuth();
 
     const timeout = setTimeout(() => {
       if (mounted) setLoading(false);
-    }, 5000);
+    }, 3000);
 
     return () => {
       mounted = false;
@@ -145,9 +108,21 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setLoading(false);
-    return { error: error?.message ?? null };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setLoading(false);
+        return { error: error.message };
+      }
+      if (data.user) {
+        await fetchProfile(data.user.id);
+      }
+      setLoading(false);
+      return { error: null };
+    } catch (e: any) {
+      setLoading(false);
+      return { error: e?.message || 'Erro inesperado' };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
@@ -163,13 +138,14 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) return { error: error.message };
 
-      // Try to create profile — fire and forget, don't block signup flow
       if (data.user) {
-        (supabase as any).from('profiles').upsert({
-          user_id: data.user.id,
-          full_name: fullName,
-          phone: phone || null,
-        }, { onConflict: 'user_id' }).catch(() => {});
+        try {
+          await (supabase as any).from('profiles').upsert({
+            user_id: data.user.id,
+            full_name: fullName,
+            phone: phone || null,
+          }, { onConflict: 'user_id' });
+        } catch {}
       }
 
       return { error: null };
@@ -179,16 +155,15 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-    setLoyaltyPoints(0);
+    await supabase.auth.signOut();
   };
 
   return (
     <CustomerAuthContext.Provider value={{
-      user, profile, loading, loyaltyPoints, loyaltyActive,
-      signIn, signUp, signOut, refreshPoints, updateProfile, refreshProfile,
+      user, profile, loading,
+      signIn, signUp, signOut, updateProfile, refreshProfile,
     }}>
       {children}
     </CustomerAuthContext.Provider>

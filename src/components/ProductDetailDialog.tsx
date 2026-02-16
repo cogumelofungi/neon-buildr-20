@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { cn } from '@/lib/utils';
-import { Minus, Plus, X, Image as ImageIcon, Gift } from 'lucide-react';
+import { Minus, Plus, X, Image as ImageIcon, Gift, CirclePlus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -34,6 +34,13 @@ interface UpsellOffer {
   };
 }
 
+interface ProductAddon {
+  id: string;
+  name: string;
+  price: number;
+  category_id: string;
+}
+
 interface ProductDetailDialogProps {
   item: ProductItem;
   open: boolean;
@@ -44,18 +51,22 @@ const ProductDetailDialog = ({ item, open, onOpenChange }: ProductDetailDialogPr
   const [quantity, setQuantity] = useState(1);
   const [upsells, setUpsells] = useState<UpsellOffer[]>([]);
   const [selectedUpsells, setSelectedUpsells] = useState<Set<string>>(new Set());
+  const [addons, setAddons] = useState<ProductAddon[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Map<string, number>>(new Map());
   const { addItem } = useCart();
 
   useEffect(() => {
     if (open && item.id) {
       fetchUpsells();
+      fetchAddons();
       setSelectedUpsells(new Set());
+      setSelectedAddons(new Map());
       setQuantity(1);
     }
   }, [open, item.id]);
 
   const fetchUpsells = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('product_upsells')
       .select('id, upsell_product_id, extra_price, label')
       .eq('product_id', item.id)
@@ -80,6 +91,16 @@ const ProductDetailDialog = ({ item, open, onOpenChange }: ProductDetailDialogPr
     }
   };
 
+  const fetchAddons = async () => {
+    const { data } = await supabase
+      .from('product_addons' as any)
+      .select('id, name, price, category_id')
+      .eq('category_id', item.category_id)
+      .eq('is_active', true)
+      .order('sort_order');
+    setAddons((data as unknown as ProductAddon[]) || []);
+  };
+
   const formatPrice = (price: number) => {
     return Number(price).toLocaleString('pt-BR', {
       style: 'currency',
@@ -96,29 +117,56 @@ const ProductDetailDialog = ({ item, open, onOpenChange }: ProductDetailDialogPr
     });
   };
 
+  const changeAddonQty = (id: string, delta: number) => {
+    setSelectedAddons(prev => {
+      const next = new Map(prev);
+      const current = next.get(id) || 0;
+      const newVal = Math.max(0, current + delta);
+      if (newVal === 0) next.delete(id);
+      else next.set(id, newVal);
+      return next;
+    });
+  };
+
   const upsellTotal = upsells
     .filter(u => selectedUpsells.has(u.id))
     .reduce((sum, u) => sum + Number(u.extra_price), 0);
 
-  const total = (Number(item.price) + upsellTotal) * quantity;
+  const addonsTotal = addons.reduce((sum, a) => {
+    const qty = selectedAddons.get(a.id) || 0;
+    return sum + Number(a.price) * qty;
+  }, 0);
+
+  const total = (Number(item.price) + upsellTotal + addonsTotal) * quantity;
   const categorySlug = item.categories?.slug;
 
   const handleAddToCart = () => {
-    // Add main item
+    // Build addons list for cart
+    const cartAddons = addons
+      .filter(a => (selectedAddons.get(a.id) || 0) > 0)
+      .map(a => ({
+        id: a.id,
+        name: a.name,
+        price: Number(a.price),
+        quantity: selectedAddons.get(a.id)!,
+      }));
+
+    // Add main item with addons embedded in price
     addItem({
       id: `${item.id}-${Date.now()}`,
       item: {
         id: item.id,
         name: item.name,
         description: item.description,
-        price: Number(item.price),
+        price: Number(item.price) + addonsTotal,
         image: item.image_url || '',
         category: (categorySlug as 'hamburgueres' | 'acai' | 'bebidas') || 'hamburgueres',
       },
       quantity,
       addBatata: false,
       bebida: null,
-      totalPrice: Number(item.price) * quantity,
+      addons: cartAddons.length > 0 ? cartAddons : undefined,
+      totalPrice: (Number(item.price) + addonsTotal) * quantity,
     });
 
     // Add selected upsells as separate cart items
@@ -146,13 +194,20 @@ const ProductDetailDialog = ({ item, open, onOpenChange }: ProductDetailDialogPr
       .filter(u => selectedUpsells.has(u.id) && u.upsell_product)
       .map(u => u.upsell_product!.name);
 
+    const addonNames = addons
+      .filter(a => (selectedAddons.get(a.id) || 0) > 0)
+      .map(a => `${selectedAddons.get(a.id)}x ${a.name}`);
+
+    const extraNames = [...upsellNames, ...addonNames];
+
     toast({
       title: 'Adicionado ao carrinho!',
-      description: `${quantity}x ${item.name}${upsellNames.length > 0 ? ` + ${upsellNames.join(', ')}` : ''} - ${formatPrice(total)}`,
+      description: `${quantity}x ${item.name}${extraNames.length > 0 ? ` + ${extraNames.join(', ')}` : ''} - ${formatPrice(total)}`,
     });
 
     setQuantity(1);
     setSelectedUpsells(new Set());
+    setSelectedAddons(new Map());
     onOpenChange(false);
   };
 
@@ -189,6 +244,55 @@ const ProductDetailDialog = ({ item, open, onOpenChange }: ProductDetailDialogPr
             >
               {formatPrice(Number(item.price))}
             </span>
+
+            {/* Addons */}
+            {addons.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <CirclePlus className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Adicione no seu pedido</span>
+                </div>
+                <div className="space-y-2">
+                  {addons.map(a => {
+                    const qty = selectedAddons.get(a.id) || 0;
+                    return (
+                      <div
+                        key={a.id}
+                        className={cn(
+                          'w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200',
+                          qty > 0
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border'
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">{a.name}</p>
+                        </div>
+                        <span className="text-sm font-bold text-primary whitespace-nowrap">
+                          + {formatPrice(Number(a.price))}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => changeAddonQty(a.id, -1)}
+                            disabled={qty === 0}
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-muted text-foreground hover:bg-border transition-colors disabled:opacity-30"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-5 text-center text-sm font-semibold text-foreground">{qty}</span>
+                          <button
+                            onClick={() => changeAddonQty(a.id, 1)}
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Upsell Offers */}
             {upsells.length > 0 && (

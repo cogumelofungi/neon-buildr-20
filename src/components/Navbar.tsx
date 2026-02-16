@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Tag, ClipboardList, ShoppingCart, Menu, X, User, Star } from 'lucide-react';
+import { Home, Tag, ClipboardList, ShoppingCart, Menu, X, User } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomerAuth } from '@/hooks/use-customer-auth';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { getItemCount } = useCart();
-  const { user, profile, loyaltyPoints, loyaltyActive } = useCustomerAuth();
+  const { user, profile } = useCustomerAuth();
   const itemCount = getItemCount();
 
   return (
@@ -80,12 +80,6 @@ const Navbar = () => {
           >
             <User className="w-4 h-4" />
             {user ? (profile?.full_name?.split(' ')[0] || 'Conta') : 'Entrar'}
-            {user && loyaltyActive && loyaltyPoints > 0 && (
-              <span className="flex items-center gap-0.5 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
-                <Star className="w-3 h-3" />
-                {loyaltyPoints}
-              </span>
-            )}
           </Link>
 
         </nav>
