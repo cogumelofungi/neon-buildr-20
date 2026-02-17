@@ -15,6 +15,7 @@ import ContaLogin from "./pages/ContaLogin";
 import Conta from "./pages/Conta";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
+import AdminPedidos from "./pages/AdminPedidos";
 import Loja from "./pages/Loja";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,7 @@ const App = () => {
               <BrowserRouter>
                 <Routes>
                   <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin/pedidos" element={<AdminPedidos />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/loja" element={<Loja />} />
                   <Route path="*" element={
