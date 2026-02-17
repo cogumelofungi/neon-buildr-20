@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import {
-  Plus, Trash2, Edit2, LogOut, Save, X, Image as ImageIcon,
-  LayoutGrid, Package, Upload, Star, StarOff, Gift, Tag, Layers, ClipboardList
+  Plus, Trash2, Edit2, Save, X, Image as ImageIcon,
+  Package, Upload, Star, StarOff, Gift, Tag, Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import AdminSidebar from '@/components/AdminSidebar';
 
 interface Category {
   id: string;
@@ -600,70 +602,25 @@ const Admin = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-border">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <h1 className="text-xl font-bold text-foreground">
-            Painel <span className="text-gradient-burger">Admin</span>
-          </h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/admin/pedidos')}>
-              <ClipboardList className="w-4 h-4 mr-2" /> Pedidos
-            </Button>
-            <Button variant="ghost" onClick={() => { signOut(); navigate('/'); }}>
-              <LogOut className="w-4 h-4 mr-2" /> Sair
-            </Button>
-          </div>
-        </div>
-      </header>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="container px-4 py-8">
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-8 flex-wrap">
-          <Button
-            variant={activeTab === 'products' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('products')}
-            className={activeTab === 'products' ? 'gradient-burger text-primary-foreground' : ''}
-          >
-            <Package className="w-4 h-4 mr-2" /> Produtos
-          </Button>
-          <Button
-            variant={activeTab === 'categories' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('categories')}
-            className={activeTab === 'categories' ? 'gradient-burger text-primary-foreground' : ''}
-          >
-            <LayoutGrid className="w-4 h-4 mr-2" /> Categorias
-          </Button>
-          <Button
-            variant={activeTab === 'upsells' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('upsells')}
-            className={activeTab === 'upsells' ? 'gradient-burger text-primary-foreground' : ''}
-          >
-            <Gift className="w-4 h-4 mr-2" /> Ofertas Combo
-          </Button>
-          <Button
-            variant={activeTab === 'addons' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('addons')}
-            className={activeTab === 'addons' ? 'gradient-burger text-primary-foreground' : ''}
-          >
-            <Layers className="w-4 h-4 mr-2" /> Adicionais
-          </Button>
-          <Button
-            variant={activeTab === 'promotions' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('promotions')}
-            className={activeTab === 'promotions' ? 'gradient-burger text-primary-foreground' : ''}
-          >
-            <Tag className="w-4 h-4 mr-2" /> Promoções
-          </Button>
-          <Button
-            variant={activeTab === 'rewards' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('rewards')}
-            className={activeTab === 'rewards' ? 'gradient-burger text-primary-foreground' : ''}
-          >
-            <Star className="w-4 h-4 mr-2" /> Recompensas
-          </Button>
-        </div>
+        <main className="flex-1 min-h-screen">
+          {/* Top bar with trigger */}
+          <header className="sticky top-0 z-40 glass border-b border-border h-14 flex items-center px-4 gap-3">
+            <SidebarTrigger />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {activeTab === 'products' && 'Produtos'}
+              {activeTab === 'categories' && 'Categorias'}
+              {activeTab === 'upsells' && 'Ofertas Combo'}
+              {activeTab === 'addons' && 'Adicionais'}
+              {activeTab === 'promotions' && 'Promoções'}
+              {activeTab === 'rewards' && 'Recompensas'}
+            </h2>
+          </header>
+
+          <div className="p-6">
 
         {/* PRODUCTS TAB */}
         {activeTab === 'products' && (
@@ -984,7 +941,7 @@ const Admin = () => {
                             : 'border-border text-muted-foreground hover:border-primary/50'
                         )}
                       >
-                        <LayoutGrid className="w-4 h-4" />
+                        <Layers className="w-4 h-4" />
                         {upsellApplyToCategory
                           ? `✅ Aplicar para todos os ${getCategoryName(upsellCategoryFilter)} (${upsellFilteredProducts.length} produtos)`
                           : `Aplicar para todos os "${getCategoryName(upsellCategoryFilter)}" da categoria`}
@@ -1548,8 +1505,10 @@ const Admin = () => {
             )}
           </div>
         )}
+          </div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
