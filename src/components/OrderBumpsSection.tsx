@@ -136,7 +136,7 @@ export default function OrderBumpsSection({
     loadOrderBumps();
   }, [appId]);
 
-  // Realtime: recarregar order bumps e dados desbloqueados quando houver alteração
+  // Realtime: recarregar order bumps automaticamente quando houver qualquer alteração no banco
   useEffect(() => {
     if (!appId) return;
 
@@ -150,26 +150,9 @@ export default function OrderBumpsSection({
           table: 'order_bumps',
           filter: `app_id=eq.${appId}`,
         },
-        (payload) => {
+        () => {
           console.log('[OrderBumpsSection] Realtime: order bumps atualizados, recarregando...');
           loadOrderBumps();
-          
-          // Also refresh unlocked content if the changed order bump is unlocked
-          const changedId = (payload.new as any)?.id || (payload.old as any)?.id;
-          if (changedId && unlockedContent[changedId]) {
-            fetchLatestOrderBump(changedId).then((latest) => {
-              if (latest) {
-                const updated = {
-                  ...unlockedContent,
-                  [changedId]: {
-                    orderBumpId: changedId,
-                    orderBump: latest,
-                  },
-                };
-                saveUnlockedContent(updated);
-              }
-            });
-          }
         }
       )
       .subscribe();
@@ -177,7 +160,7 @@ export default function OrderBumpsSection({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [appId, unlockedContent]);
+  }, [appId]);
 
   // Recarregar order bumps quando o usuário volta à aba (fallback)
   useEffect(() => {
@@ -190,40 +173,13 @@ export default function OrderBumpsSection({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [appId]);
 
-  // Load unlocked content from localStorage and refresh from DB
+  // Load unlocked content from localStorage
   useEffect(() => {
     const storageKey = `${STORAGE_KEY_PREFIX}${appSlug}`;
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
-        const parsed = JSON.parse(stored) as Record<string, UnlockedContent>;
-        setUnlockedContent(parsed);
-        
-        // Refresh all unlocked order bumps from DB to get latest visual settings
-        const unlockedIds = Object.keys(parsed);
-        if (unlockedIds.length > 0) {
-          Promise.all(
-            unlockedIds.map(async (obId) => {
-              const latest = await fetchLatestOrderBump(obId);
-              return latest ? { id: obId, data: latest } : null;
-            })
-          ).then((results) => {
-            const refreshed = { ...parsed };
-            let hasChanges = false;
-            results.forEach((result) => {
-              if (result && refreshed[result.id]) {
-                refreshed[result.id] = {
-                  ...refreshed[result.id],
-                  orderBump: result.data,
-                };
-                hasChanges = true;
-              }
-            });
-            if (hasChanges) {
-              saveUnlockedContent(refreshed);
-            }
-          });
-        }
+        setUnlockedContent(JSON.parse(stored));
       }
     } catch (error) {
       console.error("Erro ao carregar conteúdo desbloqueado:", error);
