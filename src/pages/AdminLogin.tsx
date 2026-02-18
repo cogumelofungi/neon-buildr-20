@@ -1,86 +1,191 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/use-auth';
-import { Lock, Mail, LogIn } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
+import { toast } from '@/hooks/use-toast';
+import { Lock, Eye, EyeOff } from 'lucide-react';
+import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isVerifyingAdmin, setIsVerifyingAdmin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { signIn, signOut, isAuthenticated, user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const loginSchema = z.object({
+    email: z.string().email(t('validation.email.invalid')),
+    password: z.string().min(6, t('validation.password.min'))
+  });
+
+  useEffect(() => {
+    const checkAndRedirect = async () => {
+      if (isAuthenticated && user && !isLoggingIn) {
+        setIsVerifyingAdmin(true);
+        console.log('🔍 Verificando role de admin para:', user.email);
+        
+        try {
+          const { data: isAdmin, error } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'admin'
+          });
+
+          console.log('📊 Resultado verificação admin:', { isAdmin, error });
+
+          if (error) {
+            console.error('❌ Erro ao verificar admin:', error);
+            toast({
+              title: t("admin.login.error_permissions"),
+              description: t("admin.login.try_later"),
+              variant: "destructive",
+            });
+            await signOut();
+            setIsVerifyingAdmin(false);
+            return;
+          }
+
+          if (isAdmin) {
+            console.log('✅ Usuário é admin, redirecionando...');
+            toast({
+              title: t("admin.login.success"),
+              description: t("admin.login.redirecting"),
+            });
+            navigate('/admin', { replace: true });
+          } else {
+            console.log('❌ Usuário não é admin');
+            toast({
+              title: t("admin.login.access_denied"),
+              description: t("admin.login.no_admin_permission"),
+              variant: "destructive",
+            });
+            await signOut();
+          }
+        } catch (err) {
+          console.error('❌ Exceção ao verificar admin:', err);
+          toast({
+            title: t("admin.login.error_permissions"),
+            description: t("admin.login.try_later"),
+            variant: "destructive",
+          });
+          await signOut();
+        } finally {
+          setIsVerifyingAdmin(false);
+        }
+      }
+    };
+
+    checkAndRedirect();
+  }, [isAuthenticated, user, navigate, isLoggingIn, signOut, t]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setIsLoggingIn(true);
 
-    const { error: signInError } = await signIn(email, password);
-    if (signInError) {
-      setError('Email ou senha incorretos');
-    } else {
-      const redirect = searchParams.get('redirect') || '/admin';
-      navigate(redirect);
+    try {
+      const validatedData = loginSchema.parse(credentials);
+      
+      console.log('🔐 Tentando fazer login...');
+      
+      const { error } = await signIn(validatedData.email, validatedData.password);
+      
+      if (error) {
+        console.error('❌ Erro no login:', error);
+        toast({
+          title: t('toast.login.error.title'),
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsLoggingIn(false);
+        return;
+      }
+      
+      console.log('✅ Login bem-sucedido, aguardando verificação de admin...');
+      setIsLoggingIn(false);
+    
+    } catch (error) {
+      console.error('❌ Exceção no login:', error);
+      
+      if (error instanceof z.ZodError) {
+        toast({
+          title: t('toast.validation.title'),
+          description: error.issues[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t('toast.login.error.title'),
+          description: t('toast.login.error.description'),
+          variant: "destructive",
+        });
+      }
+      setIsLoggingIn(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-card rounded-2xl border border-border p-8 shadow-lg">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-burger flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">Área Admin</h1>
-            <p className="text-muted-foreground mt-1">Acesse o painel de gerenciamento</p>
+    <div className="min-h-screen bg-app-bg flex items-center justify-center">
+      <Card className="w-full max-w-md p-8 bg-app-surface border-app-border">
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-16 h-16 bg-gradient-neon rounded-full flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {t('admin.login.title')}
+          </h1>
+          <p className="text-app-muted text-center">
+            {t('admin.login.subtitle')}
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <Label htmlFor="email">{t('admin.login.email')}</Label>
+            <Input
+              id="email"
+              type="email"
+              value={credentials.email}
+              onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+              className="bg-app-surface-hover border-app-border"
+              required
+              disabled={isLoggingIn || isVerifyingAdmin}
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="password">{t('admin.login.password')}</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-11"
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={credentials.password}
+                onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                className="bg-app-surface-hover border-app-border pr-10"
                 required
+                disabled={isLoggingIn || isVerifyingAdmin}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                disabled={isLoggingIn || isVerifyingAdmin}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
+          </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="password"
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-11"
-                required
-              />
-            </div>
-
-            {error && (
-              <p className="text-destructive text-sm text-center">{error}</p>
-            )}
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full gradient-burger text-primary-foreground hover:opacity-90"
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </form>
-        </div>
-      </div>
+          <Button type="submit" className="w-full bg-gradient-neon" disabled={isLoggingIn || isVerifyingAdmin}>
+            {isLoggingIn ? t('admin.login.loading') : isVerifyingAdmin ? t('admin.login.verifying') : t('admin.login.submit')}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 };

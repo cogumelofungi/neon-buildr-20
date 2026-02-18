@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Service Worker & Storage Config</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .test-item {
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 4px solid #e0e0e0;
+            background: #f9f9f9;
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .test-item.pass {
+            border-left-color: #28a745;
+            background: #f1f8f4;
+        }
+        
+        .test-item.fail {
+            border-left-color: #dc3545;
+            background: #fdf1f2;
+        }
+        
+        .test-item.warn {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .icon {
+            font-size: 20px;
+            min-width: 20px;
+        }
+        
+        .test-content {
+            flex: 1;
+        }
+        
+        .test-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .test-value {
+            color: #666;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        
+        .summary {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .summary-card {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .summary-card.green {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .summary-card.red {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .summary-card.yellow {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .summary-card h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .summary-card p {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .alert.info {
+            background: #cfe2ff;
+            color: #084298;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #664d03;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Teste: Service Worker & Supabase Storage</h1>
+            <p>Verifique se o Service Worker está ativo e se as configurações de storage do Supabase estão corretas</p>
+        </div>
+
+        <div class="alert info">
+            <strong>📝 Como usar:</strong><br>
+            1. Configure a URL do seu bucket Supabase abaixo<br>
+            2. Clique em "Executar Todos os Testes"<br>
+            3. Verifique os resultados de cada seção
+        </div>
+
+        <!-- Service Worker Tests -->
+        <div class="test-section">
+            <h2>
+                🔧 Service Worker
+                <span id="sw-badge" class="status-badge info">Aguardando</span>
+            </h2>
+            <div id="sw-tests"></div>
+            <button class="btn" onclick="testServiceWorker()">Testar Service Worker</button>
+            <button class="btn" onclick="unregisterServiceWorker()">Desregistrar SW</button>
+        </div>
+
+        <!-- Supabase Storage Tests -->
+        <div class="test-section">
+            <h2>
+                ☁️ Supabase Storage
+                <span id="storage-badge" class="status-badge info">Aguardando</span>
+            </h2>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">
+                    URL do arquivo PDF no Supabase:
+                </label>
+                <input 
+                    type="text" 
+                    id="supabase-url" 
+                    placeholder="https://seu-projeto.supabase.co/storage/v1/object/public/products/..."
+                    style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;"
+                />
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Cole aqui a URL pública de um arquivo PDF do seu bucket 'products'
+                </small>
+            </div>
+
+            <div id="storage-tests"></div>
+            <button class="btn" onclick="testSupabaseStorage()">Testar Storage Config</button>
+            <button class="btn" onclick="testPDFRangeRequests()">Testar Range Requests</button>
+        </div>
+
+        <!-- CORS Tests -->
+        <div class="test-section">
+            <h2>
+                🌐 CORS & Headers
+                <span id="cors-badge" class="status-badge info">Aguardando</span>
+            </h2>
+            <div id="cors-tests"></div>
+            <button class="btn" onclick="testCORS()">Testar CORS</button>
+        </div>
+
+        <!-- Summary -->
+        <div class="test-section">
+            <h2>📊 Resumo dos Testes</h2>
+            <div class="summary">
+                <div class="summary-card green">
+                    <h3 id="passed-count">0</h3>
+                    <p>Passou</p>
+                </div>
+                <div class="summary-card red">
+                    <h3 id="failed-count">0</h3>
+                    <p>Falhou</p>
+                </div>
+                <div class="summary-card yellow">
+                    <h3 id="warning-count">0</h3>
+                    <p>Avisos</p>
+                </div>
+            </div>
+            <button class="btn" onclick="runAllTests()" style="width: 100%; margin-top: 20px; font-size: 16px;">
+                🚀 Executar Todos os Testes
+            </button>
+        </div>
+
+        <!-- PDF Proxy Test -->
+        <div class="test-section">
+            <h2>📄 PDF Proxy (CORS Bypass)</h2>
+            <p style="margin-bottom:10px;color:#666;">Testa se o proxy Edge Function resolve CORS para o Mozilla PDF.js viewer.</p>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">
+                    URL pública de um PDF no Supabase Storage:
+                </label>
+                <input 
+                    type="text" 
+                    id="proxy-test-url" 
+                    placeholder="https://jboartixfhvifdecdufq.supabase.co/storage/v1/object/public/products/meu-arquivo.pdf"
+                    style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;"
+                />
+            </div>
+            <button class="btn" onclick="testPdfProxy()">Testar PDF via Proxy</button>
+            <button class="btn" onclick="openPdfJsViaProxy()">Abrir no PDF.js via Proxy</button>
+            <div id="proxy-tests"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            warnings: 0
+        };
+
+        function updateSummary() {
+            document.getElementById('passed-count').textContent = testResults.passed;
+            document.getElementById('failed-count').textContent = testResults.failed;
+            document.getElementById('warning-count').textContent = testResults.warnings;
+        }
+
+        function addTest(containerId, label, value, status, details = '') {
+            const container = document.getElementById(containerId);
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-item ${status}`;
+            
+            let icon = '✅';
+            if (status === 'fail') {
+                icon = '❌';
+                testResults.failed++;
+            } else if (status === 'warn') {
+                icon = '⚠️';
+                testResults.warnings++;
+            } else {
+                testResults.passed++;
+            }
+            
+            testDiv.innerHTML = `
+                <div class="icon">${icon}</div>
+                <div class="test-content">
+                    <div class="test-label">${label}</div>
+                    ${value ? `<div class="test-value">${value}</div>` : ''}
+                    ${details ? `<div style="margin-top: 8px; color: #666; font-size: 13px;">${details}</div>` : ''}
+                </div>
+            `;
+            
+            container.appendChild(testDiv);
+            updateSummary();
+        }
+
+        function clearTests(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        function updateBadge(badgeId, status, text) {
+            const badge = document.getElementById(badgeId);
+            badge.className = `status-badge ${status}`;
+            badge.textContent = text;
+        }
+
+        async function testServiceWorker() {
+            clearTests('sw-tests');
+            testResults = { passed: 0, failed: 0, warnings: 0 };
+            updateBadge('sw-badge', 'info', 'Testando...');
+
+            // Test 1: Service Worker API Support
+            if ('serviceWorker' in navigator) {
+                addTest('sw-tests', 'API Service Worker', 'Suportado pelo navegador', 'pass');
+            } else {
+                addTest('sw-tests', 'API Service Worker', 'NÃO suportado', 'fail', 
+                    'Este navegador não suporta Service Workers. Use Chrome, Firefox ou Edge moderno.');
+                updateBadge('sw-badge', 'error', 'Erro');
+                return;
+            }
+
+            // Test 2: Service Worker Registration
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                if (registrations.length > 0) {
+                    addTest('sw-tests', 'Service Worker Registrado', `${registrations.length} SW encontrado(s)`, 'pass');
+                    
+                    registrations.forEach((reg, index) => {
+                        const scope = reg.scope;
+                        const state = reg.active ? reg.active.state : 'não ativo';
+                        addTest('sw-tests', `SW #${index + 1} - Escopo`, scope, 'pass');
+                        addTest('sw-tests', `SW #${index + 1} - Estado`, state, state === 'activated' ? 'pass' : 'warn');
+                    });
+                } else {
+                    addTest('sw-tests', 'Service Worker Registrado', 'Nenhum SW registrado', 'warn',
+                        'Nenhum Service Worker foi encontrado. Registre um SW para PWA funcionar.');
+                }
+            } catch (error) {
+                addTest('sw-tests', 'Erro ao verificar SW', error.message, 'fail');
+            }
+
+            // Test 3: Check if SW is controlling the page
+            if (navigator.serviceWorker.controller) {
+                addTest('sw-tests', 'SW Controlando a Página', 'Sim', 'pass',
+                    'O Service Worker está ativamente controlando esta página.');
+            } else {
+                addTest('sw-tests', 'SW Controlando a Página', 'Não', 'warn',
+                    'Recarregue a página após registrar o SW.');
+            }
+
+            // Test 4: Check SW files
+            const swFiles = ['/sw.js', '/sw-app.js'];
+            for (const file of swFiles) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    if (response.ok) {
+                        addTest('sw-tests', `Arquivo ${file}`, 'Encontrado', 'pass');
+                    } else {
+                        addTest('sw-tests', `Arquivo ${file}`, `HTTP ${response.status}`, 'fail');
+                    }
+                } catch (error) {
+                    addTest('sw-tests', `Arquivo ${file}`, 'Não encontrado', 'warn');
+                }
+            }
+
+            const finalStatus = testResults.failed > 0 ? 'error' : 
+                               testResults.warnings > 0 ? 'warning' : 'success';
+            updateBadge('sw-badge', finalStatus, 
+                testResults.failed > 0 ? 'Falhou' : 
+                testResults.warnings > 0 ? 'Parcial' : 'OK');
+        }
+
+        async function testSupabaseStorage() {
+            clearTests('storage-tests');
+            const savedPassed = testResults.passed;
+            const savedFailed = testResults.failed;
+            const savedWarnings = testResults.warnings;
+            
+            updateBadge('storage-badge', 'info', 'Testando...');
+
+            const url = document.getElementById('supabase-url').value.trim();
+            
+            if (!url) {
+                addTest('storage-tests', 'URL do Supabase', 'URL não fornecida', 'fail',
+                    'Por favor, insira a URL de um arquivo no bucket Supabase.');
+                updateBadge('storage-badge', 'error', 'Erro');
+                return;
+            }
+
+            // Test 1: URL validation
+            if (url.includes('supabase.co/storage')) {
+                addTest('storage-tests', 'Formato da URL', 'Válido', 'pass');
+            } else {
+                addTest('storage-tests', 'Formato da URL', 'Inválido', 'warn',
+                    'A URL não parece ser do Supabase Storage.');
+            }
+
+            // Test 2: File accessibility
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                
+                if (response.ok) {
+                    addTest('storage-tests', 'Arquivo Acessível', `HTTP ${response.status}`, 'pass');
+                } else {
+                    addTest('storage-tests', 'Arquivo Acessível', `HTTP ${response.status}`, 'fail',
+                        'O arquivo não está acessível. Verifique se o bucket é público.');
+                    updateBadge('storage-badge', 'error', 'Erro');
+                    return;
+                }
+
+                // Test 3: Content-Type
+                const contentType = response.headers.get('content-type');
+                if (contentType) {
+                    addTest('storage-tests', 'Content-Type', contentType, 
+                        contentType.includes('pdf') ? 'pass' : 'warn');
+                }
+
+                // Test 4: Content-Length
+                const contentLength = response.headers.get('content-length');
+                if (contentLength) {
+                    const sizeMB = (contentLength / 1024 / 1024).toFixed(2);
+                    addTest('storage-tests', 'Content-Length', `${sizeMB} MB`, 'pass');
+                }
+
+                // Test 5: Accept-Ranges
+                const acceptRanges = response.headers.get('accept-ranges');
+                if (acceptRanges === 'bytes') {
+                    addTest('storage-tests', 'Accept-Ranges', acceptRanges, 'pass',
+                        '✅ Suporta requisições parciais (streaming)');
+                } else {
+                    addTest('storage-tests', 'Accept-Ranges', acceptRanges || 'N/A', 'fail',
+                        '❌ Não suporta streaming - PDFs grandes podem ter problemas');
+                }
+
+                // Test 6: Cache-Control
+                const cacheControl = response.headers.get('cache-control');
+                if (cacheControl) {
+                    addTest('storage-tests', 'Cache-Control', cacheControl, 'pass');
+                } else {
+                    addTest('storage-tests', 'Cache-Control', 'Não configurado', 'warn');
+                }
+
+                // Test 7: CORS Headers
+                const accessControl = response.headers.get('access-control-allow-origin');
+                if (accessControl) {
+                    addTest('storage-tests', 'Access-Control-Allow-Origin', accessControl, 'pass',
+                        '✅ CORS configurado corretamente');
+                } else {
+                    addTest('storage-tests', 'Access-Control-Allow-Origin', 'Não encontrado', 'fail',
+                        '❌ CORS não configurado - pode causar erros cross-origin');
+                }
+
+            } catch (error) {
+                addTest('storage-tests', 'Erro ao testar', error.message, 'fail');
+                updateBadge('storage-badge', 'error', 'Erro');
+                return;
+            }
+
+            const finalStatus = (testResults.failed - savedFailed) > 0 ? 'error' : 
+                               (testResults.warnings - savedWarnings) > 0 ? 'warning' : 'success';
+            updateBadge('storage-badge', finalStatus, 
+                (testResults.failed - savedFailed) > 0 ? 'Falhou' : 
+                (testResults.warnings - savedWarnings) > 0 ? 'Parcial' : 'OK');
+        }
+
+        async function testPDFRangeRequests() {
+            const url = document.getElementById('supabase-url').value.trim();
+            
+            if (!url) {
+                alert('Por favor, insira a URL do Supabase primeiro.');
+                return;
+            }
+
+            clearTests('storage-tests');
+            const savedPassed = testResults.passed;
+            const savedFailed = testResults.failed;
+            const savedWarnings = testResults.warnings;
+
+            updateBadge('storage-badge', 'info', 'Testando Range...');
+
+            // Test Range Request
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Range': 'bytes=0-1023'
+                    }
+                });
+
+                if (response.status === 206) {
+                    addTest('storage-tests', 'Range Request (Partial Content)', 'HTTP 206 ✅', 'pass',
+                        'O servidor suporta requisições parciais (ideal para PDFs grandes)');
+                    
+                    const contentRange = response.headers.get('content-range');
+                    if (contentRange) {
+                        addTest('storage-tests', 'Content-Range Header', contentRange, 'pass');
+                    }
+                } else if (response.status === 200) {
+                    addTest('storage-tests', 'Range Request', `HTTP ${response.status}`, 'warn',
+                        'O servidor não suporta Range Requests - pode impactar performance com arquivos grandes');
+                } else {
+                    addTest('storage-tests', 'Range Request', `HTTP ${response.status}`, 'fail');
+                }
+
+                // Test multiple ranges
+                const response2 = await fetch(url, {
+                    headers: {
+                        'Range': 'bytes=1024-2047'
+                    }
+                });
+
+                if (response2.status === 206) {
+                    addTest('storage-tests', 'Range Request Múltiplos', 'Funciona ✅', 'pass',
+                        'Múltiplos ranges funcionam - navegação em PDFs será rápida');
+                }
+
+            } catch (error) {
+                addTest('storage-tests', 'Erro em Range Request', error.message, 'fail');
+            }
+
+            const finalStatus = (testResults.failed - savedFailed) > 0 ? 'error' : 
+                               (testResults.warnings - savedWarnings) > 0 ? 'warning' : 'success';
+            updateBadge('storage-badge', finalStatus, 
+                (testResults.failed - savedFailed) > 0 ? 'Falhou' : 
+                (testResults.warnings - savedWarnings) > 0 ? 'Parcial' : 'OK');
+        }
+
+        async function testCORS() {
+            clearTests('cors-tests');
+            const savedPassed = testResults.passed;
+            const savedFailed = testResults.failed;
+            const savedWarnings = testResults.warnings;
+            
+            updateBadge('cors-badge', 'info', 'Testando...');
+
+            const url = document.getElementById('supabase-url').value.trim();
+            
+            if (!url) {
+                addTest('cors-tests', 'URL do Supabase', 'URL não fornecida', 'fail');
+                updateBadge('cors-badge', 'error', 'Erro');
+                return;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'OPTIONS'
+                });
+
+                // Test CORS headers
+                const corsHeaders = {
+                    'access-control-allow-origin': 'Allow Origin',
+                    'access-control-allow-methods': 'Allow Methods',
+                    'access-control-allow-headers': 'Allow Headers',
+                    'access-control-expose-headers': 'Expose Headers',
+                    'access-control-max-age': 'Max Age'
+                };
+
+                Object.entries(corsHeaders).forEach(([header, label]) => {
+                    const value = response.headers.get(header);
+                    if (value) {
+                        addTest('cors-tests', label, value, 'pass');
+                    } else {
+                        addTest('cors-tests', label, 'Não configurado', 'warn',
+                            `Header ${header} não encontrado`);
+                    }
+                });
+
+                // Test if specific headers are exposed
+                const exposedHeaders = response.headers.get('access-control-expose-headers');
+                if (exposedHeaders) {
+                    const requiredHeaders = ['accept-ranges', 'content-range', 'content-length'];
+                    const exposed = exposedHeaders.toLowerCase().split(',').map(h => h.trim());
+                    
+                    requiredHeaders.forEach(header => {
+                        if (exposed.some(h => h.includes(header))) {
+                            addTest('cors-tests', `Header Exposto: ${header}`, '✅ Configurado', 'pass');
+                        } else {
+                            addTest('cors-tests', `Header Exposto: ${header}`, '❌ Não exposto', 'fail',
+                                'Este header precisa estar em exposed_headers para o PDF Viewer funcionar');
+                        }
+                    });
+                }
+
+            } catch (error) {
+                addTest('cors-tests', 'Erro ao testar CORS', error.message, 'fail',
+                    'Não foi possível fazer requisição OPTIONS - CORS pode estar bloqueado');
+            }
+
+            const finalStatus = (testResults.failed - savedFailed) > 0 ? 'error' : 
+                               (testResults.warnings - savedWarnings) > 0 ? 'warning' : 'success';
+            updateBadge('cors-badge', finalStatus, 
+                (testResults.failed - savedFailed) > 0 ? 'Falhou' : 
+                (testResults.warnings - savedWarnings) > 0 ? 'Parcial' : 'OK');
+        }
+
+        async function runAllTests() {
+            testResults = { passed: 0, failed: 0, warnings: 0 };
+            await testServiceWorker();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testSupabaseStorage();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testCORS();
+            
+            // Show completion message
+            const totalTests = testResults.passed + testResults.failed + testResults.warnings;
+            alert(`✅ Testes concluídos!\n\n` +
+                  `Total: ${totalTests} testes\n` +
+                  `✅ Passou: ${testResults.passed}\n` +
+                  `❌ Falhou: ${testResults.failed}\n` +
+                  `⚠️ Avisos: ${testResults.warnings}`);
+        }
+
+        async function unregisterServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+                alert('Todos os Service Workers foram desregistrados. Recarregue a página.');
+                location.reload();
+            }
+        }
+
+        // Auto-detect Supabase URL from current domain
+        window.addEventListener('load', () => {
+            const currentDomain = window.location.hostname;
+            if (currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1')) {
+                // Local development - don't auto-fill
+                document.getElementById('supabase-url').placeholder = 
+                    'Cole aqui a URL completa de um PDF do seu bucket Supabase';
+            }
+        });
+
+        const PDF_PROXY_BASE = 'https://jboartixfhvifdecdufq.supabase.co/functions/v1/pdf-proxy';
+
+        async function testPdfProxy() {
+            const container = document.getElementById('proxy-tests');
+            container.innerHTML = '';
+            const url = document.getElementById('proxy-test-url').value.trim();
+            if (!url) { alert('Insira a URL de um PDF do Supabase Storage'); return; }
+
+            try {
+                const proxyUrl = PDF_PROXY_BASE + '?url=' + encodeURIComponent(url);
+                const res = await fetch(proxyUrl, { method: 'HEAD' });
+                const cors = res.headers.get('access-control-allow-origin');
+                const ct = res.headers.get('content-type');
+                const status = res.status;
+
+                addTest('proxy-tests', 'Proxy Status', 'HTTP ' + status, status < 400 ? 'pass' : 'fail');
+                addTest('proxy-tests', 'CORS Header', cors || 'ausente', cors === '*' ? 'pass' : 'fail');
+                addTest('proxy-tests', 'Content-Type', ct || 'ausente', ct && ct.includes('pdf') ? 'pass' : 'warn');
+            } catch (e) {
+                addTest('proxy-tests', 'Erro no proxy', e.message, 'fail');
+            }
+        }
+
+        function openPdfJsViaProxy() {
+            const url = document.getElementById('proxy-test-url').value.trim();
+            if (!url) { alert('Insira a URL de um PDF do Supabase Storage'); return; }
+            const proxyUrl = PDF_PROXY_BASE + '?url=' + encodeURIComponent(url);
+            const viewer = 'https://mozilla.github.io/pdf.js/web/viewer.html?file=' + encodeURIComponent(proxyUrl);
+            window.open(viewer, '_blank');
+        }
+    </script>
+</body>
+</html>
