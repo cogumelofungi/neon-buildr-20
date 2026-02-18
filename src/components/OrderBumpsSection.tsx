@@ -136,9 +136,38 @@ export default function OrderBumpsSection({
     loadOrderBumps();
   }, [appId]);
 
-  // Realtime: recarregar order bumps automaticamente quando houver qualquer alteração no banco
+   // Realtime: recarregar order bumps automaticamente quando houver qualquer alteração no banco
+  // Também atualiza o cache de conteúdo desbloqueado (nome, cor, etc.)
   useEffect(() => {
     if (!appId) return;
+
+    const refreshUnlockedCache = async () => {
+      const storageKey = `${STORAGE_KEY_PREFIX}${appSlug}`;
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (!stored) return;
+        const current = JSON.parse(stored) as Record<string, UnlockedContent>;
+        const unlockedIds = Object.keys(current);
+        if (unlockedIds.length === 0) return;
+
+        let updated = false;
+        const newUnlocked = { ...current };
+        for (const obId of unlockedIds) {
+          const latest = await fetchLatestOrderBump(obId);
+          if (latest) {
+            newUnlocked[obId] = { orderBumpId: obId, orderBump: latest };
+            updated = true;
+          }
+        }
+        if (updated) {
+          localStorage.setItem(storageKey, JSON.stringify(newUnlocked));
+          setUnlockedContent(newUnlocked);
+          console.log('[OrderBumpsSection] Cache de conteúdo desbloqueado atualizado via Realtime');
+        }
+      } catch (e) {
+        console.error('[OrderBumpsSection] Erro ao atualizar cache desbloqueado:', e);
+      }
+    };
 
     const channel = supabase
       .channel(`order_bumps_realtime_${appId}`)
@@ -153,6 +182,7 @@ export default function OrderBumpsSection({
         () => {
           console.log('[OrderBumpsSection] Realtime: order bumps atualizados, recarregando...');
           loadOrderBumps();
+          refreshUnlockedCache();
         }
       )
       .subscribe();
@@ -160,7 +190,7 @@ export default function OrderBumpsSection({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [appId]);
+  }, [appId, appSlug]);
 
   // Recarregar order bumps quando o usuário volta à aba (fallback)
   useEffect(() => {
