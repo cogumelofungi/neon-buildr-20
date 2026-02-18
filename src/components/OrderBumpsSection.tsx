@@ -286,27 +286,68 @@ export default function OrderBumpsSection({
 
   const fetchLatestOrderBump = async (orderBumpId: string) => {
     try {
-      const supabaseUrl = "https://jboartixfhvifdecdufq.supabase.co";
-      const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impib2FydGl4Zmh2aWZkZWNkdWZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2OTc4OTgsImV4cCI6MjA3MTI3Mzg5OH0.cCa4TBR8TX9rOHy4AaKj2QRzHZIg6vc06eEkbUiHzo4";
-      
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_order_bump_details`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseAnonKey,
-          "Authorization": `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ p_order_bump_id: orderBumpId }),
-      });
+      const { data, error } = await supabase
+        .from('order_bumps')
+        .select('*')
+        .eq('id', orderBumpId)
+        .single();
 
-      if (!response.ok) {
-        console.error("Erro ao buscar order bump atualizado:", response.statusText);
+      if (error || !data) {
+        console.error("Erro ao buscar order bump atualizado:", error);
         return null;
       }
 
-      const data = await response.json();
-      if (!data) return null;
-      return data as OrderBumpData;
+      // Mapear os campos da tabela para OrderBumpData
+      const mapped: OrderBumpData = {
+        id: data.id,
+        nome: data.nome || data.label,
+        label: data.label,
+        cor: data.cor,
+        icone_url: data.icone_url,
+        capa_url: data.capa_url,
+        template: data.template,
+        app_theme: data.app_theme,
+        allow_pdf_download: data.allow_pdf_download,
+        view_button_label: data.view_button_label,
+        theme_config: data.theme_config,
+        produto_principal_url: data.content_url || data.produto_principal_url,
+        bonus1_url: data.bonus1_url,
+        bonus2_url: data.bonus2_url,
+        bonus3_url: data.bonus3_url,
+        bonus4_url: data.bonus4_url,
+        bonus5_url: data.bonus5_url,
+        bonus6_url: data.bonus6_url,
+        bonus7_url: data.bonus7_url,
+        bonus8_url: data.bonus8_url,
+        bonus9_url: data.bonus9_url,
+        main_product_label: data.main_product_label,
+        main_product_description: data.main_product_description,
+        bonuses_label: data.bonuses_label,
+        main_product_thumbnail: data.main_product_thumbnail,
+        bonus1_label: data.bonus1_label,
+        bonus1_thumbnail: data.bonus1_thumbnail,
+        bonus2_label: data.bonus2_label,
+        bonus2_thumbnail: data.bonus2_thumbnail,
+        bonus3_label: data.bonus3_label,
+        bonus3_thumbnail: data.bonus3_thumbnail,
+        bonus4_label: data.bonus4_label,
+        bonus4_thumbnail: data.bonus4_thumbnail,
+        bonus5_label: data.bonus5_label,
+        bonus5_thumbnail: data.bonus5_thumbnail,
+        bonus6_label: data.bonus6_label,
+        bonus6_thumbnail: data.bonus6_thumbnail,
+        bonus7_label: data.bonus7_label,
+        bonus7_thumbnail: data.bonus7_thumbnail,
+        bonus8_label: data.bonus8_label,
+        bonus8_thumbnail: data.bonus8_thumbnail,
+        bonus9_label: data.bonus9_label,
+        bonus9_thumbnail: data.bonus9_thumbnail,
+        video_course_enabled: data.video_course_enabled,
+        video_modules: data.video_modules as any[] || [],
+      };
+
+      console.log('[OrderBumpsSection] Order bump atualizado com sucesso:', { id: orderBumpId, nome: mapped.nome, cor: mapped.cor });
+      return mapped;
     } catch (e) {
       console.error("Erro ao buscar order bump atualizado:", e);
       return null;
