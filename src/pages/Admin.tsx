@@ -283,7 +283,7 @@ const Admin = () => {
     const { error } = await (supabase as any).from('products').delete().eq('id', id);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Produto removido!' });
-    fetchData();
+    setProducts(prev => prev.filter(p => p.id !== id));
   };
 
   const editProduct = async (p: Product) => {
@@ -668,11 +668,17 @@ const Admin = () => {
     const newIndex = items.findIndex((i) => i.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
     const reordered = arrayMove(items, oldIndex, newIndex);
+
+    // Update local state immediately (no reload)
+    if (table === 'products') setProducts(reordered as Product[]);
+    else if (table === 'categories') setCategories(reordered as Category[]);
+    else if (table === 'product_addons') setAddons(reordered as Addon[]);
+
+    // Persist new order in background
     const updates = reordered.map((item, idx) =>
       (supabase as any).from(table).update({ sort_order: idx }).eq('id', item.id)
     );
     await Promise.all(updates);
-    fetchData();
   };
 
   if (authLoading || loading) {
