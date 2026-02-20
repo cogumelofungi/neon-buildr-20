@@ -135,6 +135,7 @@ const Admin = () => {
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
+  const [inlineEditProductId, setInlineEditProductId] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState({
     name: '', description: '', price: '', category_id: '', is_popular: false, image_url: ''
@@ -147,11 +148,13 @@ const Admin = () => {
 
   // Category form
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [inlineEditCategoryId, setInlineEditCategoryId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState({ name: '', slug: '', icon: 'utensils' });
 
   // Upsell form
   const [showUpsellForm, setShowUpsellForm] = useState(false);
+  const [inlineEditUpsellId, setInlineEditUpsellId] = useState<string | null>(null);
   const [editingUpsell, setEditingUpsell] = useState<Upsell | null>(null);
   const [upsellForm, setUpsellForm] = useState({
     product_id: '', upsell_product_id: '', extra_price: '', label: ''
@@ -161,12 +164,14 @@ const Admin = () => {
 
   // Addon form
   const [showAddonForm, setShowAddonForm] = useState(false);
+  const [inlineEditAddonId, setInlineEditAddonId] = useState<string | null>(null);
   const [editingAddon, setEditingAddon] = useState<Addon | null>(null);
   const [addonForm, setAddonForm] = useState({ name: '', price: '', category_id: '' });
   const [addonCategoryFilter, setAddonCategoryFilter] = useState<string>('all');
 
   // Reward form
   const [showRewardForm, setShowRewardForm] = useState(false);
+  const [inlineEditRewardId, setInlineEditRewardId] = useState<string | null>(null);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [rewardForm, setRewardForm] = useState({
     name: '', description: '', points_required: '', reward_type: 'free_delivery', is_active: true
@@ -174,6 +179,7 @@ const Admin = () => {
 
   // Promotion form
   const [showPromoForm, setShowPromoForm] = useState(false);
+  const [inlineEditPromoId, setInlineEditPromoId] = useState<string | null>(null);
   const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
   const [promoForm, setPromoForm] = useState({
     title: '', description: '', original_price: '', promo_price: '', valid_until: 'Hoje', items: '', image_url: '', is_active: true
@@ -288,6 +294,8 @@ const Admin = () => {
 
   const editProduct = async (p: Product) => {
     setEditingProduct(p);
+    setInlineEditProductId(p.id);
+    setShowProductForm(false);
     setProductForm({
       name: p.name,
       description: p.description,
@@ -296,7 +304,6 @@ const Admin = () => {
       is_popular: p.is_popular,
       image_url: p.image_url || '',
     });
-    setShowProductForm(true);
     // Fetch sizes for this product
     const { data } = await (supabase as any)
       .from('product_sizes')
@@ -305,11 +312,16 @@ const Admin = () => {
       .order('sort_order')
       .order('created_at');
     setProductSizes(data || []);
+    // Scroll to the product row
+    setTimeout(() => {
+      document.getElementById(`product-row-${p.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   const resetProductForm = () => {
     setProductForm({ name: '', description: '', price: '', category_id: '', is_popular: false, image_url: '' });
     setEditingProduct(null);
+    setInlineEditProductId(null);
     setImageFile(null);
     setShowProductForm(false);
     setProductSizes([]);
@@ -374,13 +386,18 @@ const Admin = () => {
 
   const editCategory = (c: Category) => {
     setEditingCategory(c);
+    setInlineEditCategoryId(c.id);
+    setShowCategoryForm(false);
     setCategoryForm({ name: c.name, slug: c.slug, icon: c.icon });
-    setShowCategoryForm(true);
+    setTimeout(() => {
+      document.getElementById(`category-row-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   const resetCategoryForm = () => {
     setCategoryForm({ name: '', slug: '', icon: 'utensils' });
     setEditingCategory(null);
+    setInlineEditCategoryId(null);
     setShowCategoryForm(false);
   };
 
@@ -447,6 +464,8 @@ const Admin = () => {
 
   const editUpsell = (u: Upsell) => {
     setEditingUpsell(u);
+    setInlineEditUpsellId(u.id);
+    setShowUpsellForm(false);
     setUpsellApplyToCategory(false);
     setUpsellForm({
       product_id: u.product_id,
@@ -454,12 +473,15 @@ const Admin = () => {
       extra_price: String(u.extra_price),
       label: u.label,
     });
-    setShowUpsellForm(true);
+    setTimeout(() => {
+      document.getElementById(`upsell-row-${u.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   const resetUpsellForm = () => {
     setUpsellForm({ product_id: '', upsell_product_id: '', extra_price: '', label: '' });
     setEditingUpsell(null);
+    setInlineEditUpsellId(null);
     setUpsellApplyToCategory(false);
     setShowUpsellForm(false);
   };
@@ -500,17 +522,22 @@ const Admin = () => {
 
   const editAddon = (a: Addon) => {
     setEditingAddon(a);
+    setInlineEditAddonId(a.id);
+    setShowAddonForm(false);
     setAddonForm({
       name: a.name,
       price: String(a.price),
       category_id: a.category_id,
     });
-    setShowAddonForm(true);
+    setTimeout(() => {
+      document.getElementById(`addon-row-${a.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   const resetAddonForm = () => {
     setAddonForm({ name: '', price: '', category_id: '' });
     setEditingAddon(null);
+    setInlineEditAddonId(null);
     setShowAddonForm(false);
   };
 
@@ -552,6 +579,8 @@ const Admin = () => {
 
   const editReward = (r: Reward) => {
     setEditingReward(r);
+    setInlineEditRewardId(r.id);
+    setShowRewardForm(false);
     setRewardForm({
       name: r.name,
       description: r.description || '',
@@ -559,12 +588,15 @@ const Admin = () => {
       reward_type: r.reward_type || 'custom',
       is_active: r.is_active,
     });
-    setShowRewardForm(true);
+    setTimeout(() => {
+      document.getElementById(`reward-row-${r.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   const resetRewardForm = () => {
     setRewardForm({ name: '', description: '', points_required: '', reward_type: 'free_delivery', is_active: true });
     setEditingReward(null);
+    setInlineEditRewardId(null);
     setShowRewardForm(false);
   };
 
@@ -617,6 +649,8 @@ const Admin = () => {
 
   const editPromo = (p: Promotion) => {
     setEditingPromo(p);
+    setInlineEditPromoId(p.id);
+    setShowPromoForm(false);
     setPromoForm({
       title: p.title,
       description: p.description,
@@ -627,12 +661,15 @@ const Admin = () => {
       image_url: p.image_url || '',
       is_active: p.is_active,
     });
-    setShowPromoForm(true);
+    setTimeout(() => {
+      document.getElementById(`promo-row-${p.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
 
   const resetPromoForm = () => {
     setPromoForm({ title: '', description: '', original_price: '', promo_price: '', valid_until: 'Hoje', items: '', image_url: '', is_active: true });
     setEditingPromo(null);
+    setInlineEditPromoId(null);
     setPromoImageFile(null);
     setShowPromoForm(false);
   };
@@ -745,13 +782,11 @@ const Admin = () => {
               </Button>
             </div>
 
-            {/* Product Form */}
-            {showProductForm && (
+            {/* Product Form - only shown for new products (not edit, which is inline) */}
+            {showProductForm && !inlineEditProductId && (
               <div className="bg-card border border-border rounded-xl p-6 mb-6 animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-foreground">Novo Produto</h3>
                   <Button variant="ghost" size="icon" onClick={resetProductForm}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -828,58 +863,9 @@ const Admin = () => {
                   </div>
                 </div>
 
-                {/* Product Sizes - only show when editing */}
-                {editingProduct && (
-                  <div className="mt-6 border-t border-border pt-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Layers className="w-4 h-4 text-primary" />
-                      <h4 className="text-sm font-semibold text-foreground">Tamanhos (ex: 300ml, 500ml)</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Se cadastrar tamanhos, o preço base será ignorado e o menor preço será exibido na vitrine.
-                    </p>
-
-                    {/* Existing sizes */}
-                    {productSizes.length > 0 && (
-                      <div className="space-y-2 mb-3">
-                        {productSizes.map(s => (
-                          <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-border bg-muted/30">
-                            <span className="text-sm font-medium text-foreground flex-1">{s.label}</span>
-                            <span className="text-sm font-bold text-primary">{formatPrice(s.price)}</span>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDeleteSize(s.id)}>
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Add new size */}
-                    <div className="flex gap-2">
-                      <Input
-                        value={sizeForm.label}
-                        onChange={e => setSizeForm(f => ({ ...f, label: e.target.value }))}
-                        placeholder="Ex: 300ml"
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={sizeForm.price}
-                        onChange={e => setSizeForm(f => ({ ...f, price: e.target.value }))}
-                        placeholder="Preço"
-                        className="w-28"
-                      />
-                      <Button variant="outline" size="sm" onClick={handleAddSize}>
-                        <Plus className="w-4 h-4 mr-1" /> Adicionar
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex gap-2 mt-6">
                   <Button onClick={handleProductSubmit} className="gradient-burger text-primary-foreground">
-                    <Save className="w-4 h-4 mr-2" /> {editingProduct ? 'Salvar' : 'Criar'}
+                    <Save className="w-4 h-4 mr-2" /> Criar
                   </Button>
                   <Button variant="outline" onClick={resetProductForm}>Cancelar</Button>
                 </div>
@@ -894,54 +880,185 @@ const Admin = () => {
                     const SortableProduct = () => {
                       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
                       const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : undefined, position: 'relative' as const };
+                      const isInlineEditing = inlineEditProductId === p.id;
                       return (
-                        <div ref={setNodeRef} style={style} className="bg-card border border-border rounded-xl overflow-hidden flex items-center gap-3">
-                          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing pl-2 py-4">
-                            <GripVertical className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                          <div className="w-20 h-20 flex-shrink-0 bg-muted flex items-center justify-center">
-                            {p.image_url ? (
-                              <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <ImageIcon className="w-8 h-8 text-muted-foreground/30" />
-                            )}
-                          </div>
-                          <div className="flex-1 py-3 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <h4 className="font-semibold text-foreground line-clamp-1">{p.name}</h4>
-                              {p.is_popular && <Star className="w-4 h-4 text-primary flex-shrink-0 fill-primary" />}
-                              {!p.is_active && (
-                                <span className="inline-block bg-destructive/20 text-destructive text-xs font-bold px-2 py-0.5 rounded">PAUSADO</span>
+                        <div id={`product-row-${p.id}`} ref={setNodeRef} style={style}>
+                          <div className={cn("bg-card border border-border rounded-xl overflow-hidden flex items-center gap-3", isInlineEditing && "border-primary ring-1 ring-primary")}>
+                            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing pl-2 py-4">
+                              <GripVertical className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                            <div className="w-20 h-20 flex-shrink-0 bg-muted flex items-center justify-center">
+                              {p.image_url ? (
+                                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <ImageIcon className="w-8 h-8 text-muted-foreground/30" />
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{p.description}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-primary font-bold text-sm">{formatPrice(Number(p.price))}</span>
-                              <span className="text-xs text-muted-foreground">{getCategoryName(p.category_id)}</span>
+                            <div className="flex-1 py-3 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <h4 className="font-semibold text-foreground line-clamp-1">{p.name}</h4>
+                                {p.is_popular && <Star className="w-4 h-4 text-primary flex-shrink-0 fill-primary" />}
+                                {!p.is_active && (
+                                  <span className="inline-block bg-destructive/20 text-destructive text-xs font-bold px-2 py-0.5 rounded">PAUSADO</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{p.description}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-primary font-bold text-sm">{formatPrice(Number(p.price))}</span>
+                                <span className="text-xs text-muted-foreground">{getCategoryName(p.category_id)}</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-1 pr-3">
+                              <Button
+                                variant="ghost" size="icon"
+                                onClick={async () => {
+                                  const newActive = !p.is_active;
+                                  const { error } = await (supabase as any).from('products').update({ is_active: newActive }).eq('id', p.id);
+                                  if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+                                  toast({ title: newActive ? 'Produto ativado!' : 'Produto pausado!' });
+                                  fetchData();
+                                }}
+                                className={p.is_active ? 'text-green-500 hover:text-yellow-500' : 'text-yellow-500 hover:text-green-500'}
+                                title={p.is_active ? 'Pausar produto' : 'Ativar produto'}
+                              >
+                                {p.is_active ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
+                              </Button>
+                              <Button
+                                variant="ghost" size="icon"
+                                onClick={() => isInlineEditing ? resetProductForm() : editProduct(p)}
+                                className={isInlineEditing ? 'text-primary' : ''}
+                              >
+                                {isInlineEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)} className="hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-1 pr-3">
-                            <Button
-                              variant="ghost" size="icon"
-                              onClick={async () => {
-                                const newActive = !p.is_active;
-                                const { error } = await (supabase as any).from('products').update({ is_active: newActive }).eq('id', p.id);
-                                if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
-                                toast({ title: newActive ? 'Produto ativado!' : 'Produto pausado!' });
-                                fetchData();
-                              }}
-                              className={p.is_active ? 'text-green-500 hover:text-yellow-500' : 'text-yellow-500 hover:text-green-500'}
-                              title={p.is_active ? 'Pausar produto' : 'Ativar produto'}
-                            >
-                              {p.is_active ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => editProduct(p)}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)} className="hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+
+                          {/* Inline edit form */}
+                          {isInlineEditing && (
+                            <div className="bg-card border border-primary/40 border-t-0 rounded-b-xl p-5 animate-fade-in">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Nome</label>
+                                  <Input
+                                    value={productForm.name}
+                                    onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))}
+                                    placeholder="Nome do produto"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Preço (R$)</label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={productForm.price}
+                                    onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))}
+                                    placeholder="0.00"
+                                  />
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="text-sm text-muted-foreground mb-1 block">Descrição</label>
+                                  <Input
+                                    value={productForm.description}
+                                    onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))}
+                                    placeholder="Descrição do produto"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Categoria</label>
+                                  <select
+                                    value={productForm.category_id}
+                                    onChange={e => setProductForm(f => ({ ...f, category_id: e.target.value }))}
+                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                  >
+                                    <option value="">Selecione...</option>
+                                    {categories.map(c => (
+                                      <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Imagem</label>
+                                  <label className="flex-1 h-10 rounded-md border border-input bg-background px-3 flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:bg-muted transition-colors w-full">
+                                    <Upload className="w-4 h-4" />
+                                    {imageFile ? imageFile.name : 'Escolher imagem'}
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={e => setImageFile(e.target.files?.[0] ?? null)}
+                                    />
+                                  </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => setProductForm(f => ({ ...f, is_popular: !f.is_popular }))}
+                                    className={cn(
+                                      'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
+                                      productForm.is_popular
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-border text-muted-foreground hover:border-primary/50'
+                                    )}
+                                  >
+                                    {productForm.is_popular ? <Star className="w-4 h-4" /> : <StarOff className="w-4 h-4" />}
+                                    <span className="text-sm">{productForm.is_popular ? 'Popular' : 'Normal'}</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Product Sizes */}
+                              <div className="mt-5 border-t border-border pt-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Layers className="w-4 h-4 text-primary" />
+                                  <h4 className="text-sm font-semibold text-foreground">Tamanhos (ex: 300ml, 500ml)</h4>
+                                </div>
+                                <p className="text-xs text-muted-foreground mb-3">
+                                  Se cadastrar tamanhos, o preço base será ignorado e o menor preço será exibido na vitrine.
+                                </p>
+                                {productSizes.length > 0 && (
+                                  <div className="space-y-2 mb-3">
+                                    {productSizes.map(s => (
+                                      <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-border bg-muted/30">
+                                        <span className="text-sm font-medium text-foreground flex-1">{s.label}</span>
+                                        <span className="text-sm font-bold text-primary">{formatPrice(s.price)}</span>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDeleteSize(s.id)}>
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <div className="flex gap-2">
+                                  <Input
+                                    value={sizeForm.label}
+                                    onChange={e => setSizeForm(f => ({ ...f, label: e.target.value }))}
+                                    placeholder="Ex: 300ml"
+                                    className="flex-1"
+                                  />
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={sizeForm.price}
+                                    onChange={e => setSizeForm(f => ({ ...f, price: e.target.value }))}
+                                    placeholder="Preço"
+                                    className="w-28"
+                                  />
+                                  <Button variant="outline" size="sm" onClick={handleAddSize}>
+                                    <Plus className="w-4 h-4 mr-1" /> Adicionar
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2 mt-5">
+                                <Button onClick={handleProductSubmit} className="gradient-burger text-primary-foreground">
+                                  <Save className="w-4 h-4 mr-2" /> Salvar
+                                </Button>
+                                <Button variant="outline" onClick={resetProductForm}>Cancelar</Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     };
@@ -970,12 +1087,11 @@ const Admin = () => {
               </Button>
             </div>
 
-            {showCategoryForm && (
+            {/* Category Form - only for new categories */}
+            {showCategoryForm && !inlineEditCategoryId && (
               <div className="bg-card border border-border rounded-xl p-6 mb-6 animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-foreground">Nova Categoria</h3>
                   <Button variant="ghost" size="icon" onClick={resetCategoryForm}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -1014,7 +1130,7 @@ const Admin = () => {
 
                 <div className="flex gap-2 mt-6">
                   <Button onClick={handleCategorySubmit} className="gradient-burger text-primary-foreground">
-                    <Save className="w-4 h-4 mr-2" /> {editingCategory ? 'Salvar' : 'Criar'}
+                    <Save className="w-4 h-4 mr-2" /> Criar
                   </Button>
                   <Button variant="outline" onClick={resetCategoryForm}>Cancelar</Button>
                 </div>
@@ -1028,25 +1144,72 @@ const Admin = () => {
                     const SortableCategory = () => {
                       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id });
                       const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : undefined, position: 'relative' as const };
+                      const isInlineEditing = inlineEditCategoryId === c.id;
                       return (
-                        <div ref={setNodeRef} style={style} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-                              <GripVertical className="w-4 h-4 text-muted-foreground" />
+                        <div id={`category-row-${c.id}`} ref={setNodeRef} style={style}>
+                          <div className={cn("bg-card border border-border rounded-xl p-5 flex items-center justify-between", isInlineEditing && "border-primary ring-1 ring-primary rounded-b-none")}>
+                            <div className="flex items-center gap-3">
+                              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+                                <GripVertical className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-foreground">{c.name}</h4>
+                                <p className="text-sm text-muted-foreground">/{c.slug} · {c.icon}</p>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-semibold text-foreground">{c.name}</h4>
-                              <p className="text-sm text-muted-foreground">/{c.slug} · {c.icon}</p>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost" size="icon"
+                                onClick={() => isInlineEditing ? resetCategoryForm() : editCategory(c)}
+                                className={isInlineEditing ? 'text-primary' : ''}
+                              >
+                                {isInlineEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteCategory(c.id)} className="hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => editCategory(c)}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteCategory(c.id)} className="hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          {isInlineEditing && (
+                            <div className="bg-card border border-primary/40 border-t-0 rounded-b-xl p-5 animate-fade-in">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Nome</label>
+                                  <Input
+                                    value={categoryForm.name}
+                                    onChange={e => setCategoryForm(f => ({ ...f, name: e.target.value }))}
+                                    placeholder="Nome da categoria"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Slug</label>
+                                  <Input
+                                    value={categoryForm.slug}
+                                    onChange={e => setCategoryForm(f => ({ ...f, slug: e.target.value }))}
+                                    placeholder="slug-da-categoria"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Ícone (Lucide)</label>
+                                  <select
+                                    value={categoryForm.icon}
+                                    onChange={e => setCategoryForm(f => ({ ...f, icon: e.target.value }))}
+                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                  >
+                                    {iconOptions.map(icon => (
+                                      <option key={icon} value={icon}>{icon}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-4">
+                                <Button onClick={handleCategorySubmit} className="gradient-burger text-primary-foreground">
+                                  <Save className="w-4 h-4 mr-2" /> Salvar
+                                </Button>
+                                <Button variant="outline" onClick={resetCategoryForm}>Cancelar</Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     };
@@ -1227,34 +1390,99 @@ const Admin = () => {
                   const product = products.find(p => p.id === u.product_id);
                   return product?.category_id === upsellCategoryFilter;
                 })
-                .map(u => (
-                <div key={u.id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-foreground">{getProductName(u.product_id)}</span>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="text-primary font-medium">{getProductName(u.upsell_product_id)}</span>
+                .map(u => {
+                  const isInlineEditing = inlineEditUpsellId === u.id;
+                  return (
+                    <div key={u.id} id={`upsell-row-${u.id}`}>
+                      <div className={cn("bg-card border border-border rounded-xl p-5 flex items-center justify-between", isInlineEditing && "border-primary ring-1 ring-primary rounded-b-none")}>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-foreground">{getProductName(u.product_id)}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="text-primary font-medium">{getProductName(u.upsell_product_id)}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                              + {formatPrice(Number(u.extra_price))}
+                            </span>
+                            <span className="text-sm text-muted-foreground">"{u.label}"</span>
+                            <span className="text-xs text-muted-foreground/60">
+                              {getCategoryName(products.find(p => p.id === u.product_id)?.category_id || '')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost" size="icon"
+                            onClick={() => isInlineEditing ? resetUpsellForm() : editUpsell(u)}
+                            className={isInlineEditing ? 'text-primary' : ''}
+                          >
+                            {isInlineEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => deleteUpsell(u.id)} className="hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      {isInlineEditing && (
+                        <div className="bg-card border border-primary/40 border-t-0 rounded-b-xl p-5 animate-fade-in">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm text-muted-foreground mb-1 block">Produto principal</label>
+                              <select
+                                value={upsellForm.product_id}
+                                onChange={e => setUpsellForm(f => ({ ...f, product_id: e.target.value }))}
+                                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                              >
+                                <option value="">Selecione o produto...</option>
+                                {products.map(p => (
+                                  <option key={p.id} value={p.id}>{p.name} - {formatPrice(Number(p.price))}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-sm text-muted-foreground mb-1 block">Produto adicional (oferta)</label>
+                              <select
+                                value={upsellForm.upsell_product_id}
+                                onChange={e => setUpsellForm(f => ({ ...f, upsell_product_id: e.target.value }))}
+                                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                              >
+                                <option value="">Selecione o produto adicional...</option>
+                                {products.filter(p => p.id !== upsellForm.product_id).map(p => (
+                                  <option key={p.id} value={p.id}>{p.name} - {formatPrice(Number(p.price))}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-sm text-muted-foreground mb-1 block">Preço extra (R$)</label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={upsellForm.extra_price}
+                                onChange={e => setUpsellForm(f => ({ ...f, extra_price: e.target.value }))}
+                                placeholder="Ex: 10.00"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm text-muted-foreground mb-1 block">Texto da oferta</label>
+                              <Input
+                                value={upsellForm.label}
+                                onChange={e => setUpsellForm(f => ({ ...f, label: e.target.value }))}
+                                placeholder='Ex: "+ R$10 leve outro Classic"'
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            <Button onClick={handleUpsellSubmit} className="gradient-burger text-primary-foreground">
+                              <Save className="w-4 h-4 mr-2" /> Salvar
+                            </Button>
+                            <Button variant="outline" onClick={resetUpsellForm}>Cancelar</Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                        + {formatPrice(Number(u.extra_price))}
-                      </span>
-                      <span className="text-sm text-muted-foreground">"{u.label}"</span>
-                      <span className="text-xs text-muted-foreground/60">
-                        {getCategoryName(products.find(p => p.id === u.product_id)?.category_id || '')}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => editUpsell(u)}>
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteUpsell(u.id)} className="hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
             </div>
 
             {upsells.length === 0 && (
@@ -1282,12 +1510,11 @@ const Admin = () => {
               </Button>
             </div>
 
-            {showAddonForm && (
+            {/* Addon Form - only for new addons */}
+            {showAddonForm && !inlineEditAddonId && (
               <div className="bg-card border border-border rounded-xl p-6 mb-6 animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {editingAddon ? 'Editar Adicional' : 'Novo Adicional'}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-foreground">Novo Adicional</h3>
                   <Button variant="ghost" size="icon" onClick={resetAddonForm}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -1313,7 +1540,7 @@ const Admin = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-muted-foreground mb-1 block">Categoria (aplica a todos da categoria)</label>
+                    <label className="text-sm text-muted-foreground mb-1 block">Categoria</label>
                     <select
                       value={addonForm.category_id}
                       onChange={e => setAddonForm(f => ({ ...f, category_id: e.target.value }))}
@@ -1324,15 +1551,12 @@ const Admin = () => {
                         <option key={c.id} value={c.id}>{c.name} ({products.filter(p => p.category_id === c.id).length} produtos)</option>
                       ))}
                     </select>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      O adicional ficará disponível para todos os produtos desta categoria
-                    </p>
                   </div>
                 </div>
 
                 <div className="flex gap-2 mt-6">
                   <Button onClick={handleAddonSubmit} className="gradient-burger text-primary-foreground">
-                    <Save className="w-4 h-4 mr-2" /> {editingAddon ? 'Salvar' : 'Criar'}
+                    <Save className="w-4 h-4 mr-2" /> Criar
                   </Button>
                   <Button variant="outline" onClick={resetAddonForm}>Cancelar</Button>
                 </div>
@@ -1370,52 +1594,99 @@ const Admin = () => {
                     const SortableAddon = () => {
                       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: a.id });
                       const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : undefined, position: 'relative' as const };
+                      const isInlineEditing = inlineEditAddonId === a.id;
                       return (
-                        <div ref={setNodeRef} style={style} className={cn("bg-card border border-border rounded-xl p-5 flex items-center justify-between", !a.is_active && 'opacity-60')}>
-                          <div className="flex items-center gap-3 flex-1">
-                            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-                              <GripVertical className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-foreground">{a.name}</span>
-                                <span className="text-sm px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                                  + {formatPrice(Number(a.price))}
-                                </span>
-                                {!a.is_active && (
-                                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-destructive/20 text-destructive">
-                                    PAUSADO
-                                  </span>
-                                )}
+                        <div id={`addon-row-${a.id}`} ref={setNodeRef} style={style}>
+                          <div className={cn("bg-card border border-border rounded-xl p-5 flex items-center justify-between", !a.is_active && 'opacity-60', isInlineEditing && "border-primary ring-1 ring-primary rounded-b-none")}>
+                            <div className="flex items-center gap-3 flex-1">
+                              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+                                <GripVertical className="w-4 h-4 text-muted-foreground" />
                               </div>
-                              <span className="text-sm text-muted-foreground">
-                                Categoria: {getCategoryName(a.category_id)} · Aplica a {products.filter(p => p.category_id === a.category_id).length} produtos
-                              </span>
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-semibold text-foreground">{a.name}</span>
+                                  <span className="text-sm px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                    + {formatPrice(Number(a.price))}
+                                  </span>
+                                  {!a.is_active && (
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-destructive/20 text-destructive">PAUSADO</span>
+                                  )}
+                                </div>
+                                <span className="text-sm text-muted-foreground">
+                                  Categoria: {getCategoryName(a.category_id)} · Aplica a {products.filter(p => p.category_id === a.category_id).length} produtos
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost" size="icon"
+                                onClick={async () => {
+                                  const newActive = !a.is_active;
+                                  const { error } = await (supabase as any).from('product_addons').update({ is_active: newActive }).eq('id', a.id);
+                                  if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+                                  toast({ title: newActive ? 'Adicional ativado!' : 'Adicional pausado!' });
+                                  fetchData();
+                                }}
+                                className={a.is_active ? 'text-green-500 hover:text-yellow-500' : 'text-yellow-500 hover:text-green-500'}
+                                title={a.is_active ? 'Pausar adicional' : 'Ativar adicional'}
+                              >
+                                {a.is_active ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
+                              </Button>
+                              <Button
+                                variant="ghost" size="icon"
+                                onClick={() => isInlineEditing ? resetAddonForm() : editAddon(a)}
+                                className={isInlineEditing ? 'text-primary' : ''}
+                              >
+                                {isInlineEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteAddon(a.id)} className="hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={async () => {
-                                const newActive = !a.is_active;
-                                const { error } = await (supabase as any).from('product_addons').update({ is_active: newActive }).eq('id', a.id);
-                                if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
-                                toast({ title: newActive ? 'Adicional ativado!' : 'Adicional pausado!' });
-                                fetchData();
-                              }}
-                              className={a.is_active ? 'text-green-500 hover:text-yellow-500' : 'text-yellow-500 hover:text-green-500'}
-                              title={a.is_active ? 'Pausar adicional' : 'Ativar adicional'}
-                            >
-                              {a.is_active ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => editAddon(a)}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteAddon(a.id)} className="hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          {isInlineEditing && (
+                            <div className="bg-card border border-primary/40 border-t-0 rounded-b-xl p-5 animate-fade-in">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Nome</label>
+                                  <Input
+                                    value={addonForm.name}
+                                    onChange={e => setAddonForm(f => ({ ...f, name: e.target.value }))}
+                                    placeholder="Ex: Bacon extra..."
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Preço (R$)</label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={addonForm.price}
+                                    onChange={e => setAddonForm(f => ({ ...f, price: e.target.value }))}
+                                    placeholder="5.00"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-muted-foreground mb-1 block">Categoria</label>
+                                  <select
+                                    value={addonForm.category_id}
+                                    onChange={e => setAddonForm(f => ({ ...f, category_id: e.target.value }))}
+                                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                  >
+                                    <option value="">Selecione...</option>
+                                    {categories.map(c => (
+                                      <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-4">
+                                <Button onClick={handleAddonSubmit} className="gradient-burger text-primary-foreground">
+                                  <Save className="w-4 h-4 mr-2" /> Salvar
+                                </Button>
+                                <Button variant="outline" onClick={resetAddonForm}>Cancelar</Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     };
@@ -1450,152 +1721,113 @@ const Admin = () => {
               </Button>
             </div>
 
-            {showPromoForm && (
+            {/* Promo Form - only for new promos */}
+            {showPromoForm && !inlineEditPromoId && (
               <div className="bg-card border border-border rounded-xl p-6 mb-6 animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {editingPromo ? 'Editar Promoção' : 'Nova Promoção'}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-foreground">Nova Promoção</h3>
                   <Button variant="ghost" size="icon" onClick={resetPromoForm}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Título</label>
-                    <Input
-                      value={promoForm.title}
-                      onChange={e => setPromoForm(f => ({ ...f, title: e.target.value }))}
-                      placeholder="Ex: Combo Duplo"
-                    />
+                    <Input value={promoForm.title} onChange={e => setPromoForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Combo Duplo" />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Válido até</label>
-                    <Input
-                      value={promoForm.valid_until}
-                      onChange={e => setPromoForm(f => ({ ...f, valid_until: e.target.value }))}
-                      placeholder="Ex: Hoje, 17h-19h"
-                    />
+                    <Input value={promoForm.valid_until} onChange={e => setPromoForm(f => ({ ...f, valid_until: e.target.value }))} placeholder="Ex: Hoje, 17h-19h" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-sm text-muted-foreground mb-1 block">Descrição</label>
-                    <Input
-                      value={promoForm.description}
-                      onChange={e => setPromoForm(f => ({ ...f, description: e.target.value }))}
-                      placeholder="Descrição da promoção"
-                    />
+                    <Input value={promoForm.description} onChange={e => setPromoForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição da promoção" />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Preço original (R$)</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={promoForm.original_price}
-                      onChange={e => setPromoForm(f => ({ ...f, original_price: e.target.value }))}
-                      placeholder="79.60"
-                    />
+                    <Input type="number" step="0.01" value={promoForm.original_price} onChange={e => setPromoForm(f => ({ ...f, original_price: e.target.value }))} placeholder="79.60" />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Preço promocional (R$)</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={promoForm.promo_price}
-                      onChange={e => setPromoForm(f => ({ ...f, promo_price: e.target.value }))}
-                      placeholder="59.90"
-                    />
+                    <Input type="number" step="0.01" value={promoForm.promo_price} onChange={e => setPromoForm(f => ({ ...f, promo_price: e.target.value }))} placeholder="59.90" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-sm text-muted-foreground mb-1 block">Itens incluídos (um por linha)</label>
-                    <textarea
-                      value={promoForm.items}
-                      onChange={e => setPromoForm(f => ({ ...f, items: e.target.value }))}
-                      placeholder={"2x X-Burguer Clássico\n2x Refrigerante Lata\n1x Batata Grande"}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] resize-y"
-                      rows={3}
-                    />
+                    <textarea value={promoForm.items} onChange={e => setPromoForm(f => ({ ...f, items: e.target.value }))} placeholder={"2x X-Burguer Clássico\n2x Refrigerante Lata"} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] resize-y" rows={3} />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground mb-1 block">Imagem</label>
                     <label className="flex-1 h-10 rounded-md border border-input bg-background px-3 flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:bg-muted transition-colors">
                       <Upload className="w-4 h-4" />
                       {promoImageFile ? promoImageFile.name : 'Escolher imagem'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={e => setPromoImageFile(e.target.files?.[0] ?? null)}
-                      />
+                      <input type="file" accept="image/*" className="hidden" onChange={e => setPromoImageFile(e.target.files?.[0] ?? null)} />
                     </label>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setPromoForm(f => ({ ...f, is_active: !f.is_active }))}
-                      className={cn(
-                        'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
-                        promoForm.is_active
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border text-muted-foreground hover:border-primary/50'
-                      )}
-                    >
+                    <button onClick={() => setPromoForm(f => ({ ...f, is_active: !f.is_active }))} className={cn('flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors', promoForm.is_active ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50')}>
                       <span className="text-sm">{promoForm.is_active ? '✅ Ativa' : '❌ Inativa'}</span>
                     </button>
                   </div>
                 </div>
-
                 <div className="flex gap-2 mt-6">
-                  <Button onClick={handlePromoSubmit} className="gradient-burger text-primary-foreground">
-                    <Save className="w-4 h-4 mr-2" /> {editingPromo ? 'Salvar' : 'Criar'}
-                  </Button>
+                  <Button onClick={handlePromoSubmit} className="gradient-burger text-primary-foreground"><Save className="w-4 h-4 mr-2" /> Criar</Button>
                   <Button variant="outline" onClick={resetPromoForm}>Cancelar</Button>
                 </div>
               </div>
             )}
 
             {/* Promotions List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {promotions.map(p => (
-                <div key={p.id} className="bg-card border border-border rounded-xl overflow-hidden group">
-                  <div className="h-40 bg-muted flex items-center justify-center relative">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Tag className="w-12 h-12 text-muted-foreground/30" />
-                    )}
-                    <div className="absolute top-2 left-2">
-                      <span className="gradient-acai text-secondary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                        {Math.round((1 - Number(p.promo_price) / Number(p.original_price)) * 100)}% OFF
-                      </span>
-                    </div>
-                    {!p.is_active && (
-                      <div className="absolute top-2 right-2">
-                        <span className="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                          Inativa
-                        </span>
+            <div className="space-y-4">
+              {promotions.map(p => {
+                const isInlineEditing = inlineEditPromoId === p.id;
+                return (
+                  <div key={p.id} id={`promo-row-${p.id}`}>
+                    <div className={cn("bg-card border border-border rounded-xl overflow-hidden flex gap-4 items-center p-4", isInlineEditing && "border-primary ring-1 ring-primary rounded-b-none")}>
+                      <div className="w-24 h-16 flex-shrink-0 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                        {p.image_url ? <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" /> : <Tag className="w-8 h-8 text-muted-foreground/30" />}
                       </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h4 className="font-semibold text-foreground line-clamp-1 mb-1">{p.title}</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{p.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs text-muted-foreground line-through mr-2">{formatPrice(Number(p.original_price))}</span>
-                        <span className="text-primary font-bold">{formatPrice(Number(p.promo_price))}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="font-semibold text-foreground line-clamp-1">{p.title}</h4>
+                          {!p.is_active && <span className="text-xs bg-destructive/20 text-destructive font-bold px-2 py-0.5 rounded">Inativa</span>}
+                          <span className="text-xs gradient-acai text-secondary-foreground font-bold px-2 py-0.5 rounded-full">{Math.round((1 - Number(p.promo_price) / Number(p.original_price)) * 100)}% OFF</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{p.description}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground line-through">{formatPrice(Number(p.original_price))}</span>
+                          <span className="text-primary font-bold text-sm">{formatPrice(Number(p.promo_price))}</span>
+                        </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => editPromo(p)}>
-                          <Edit2 className="w-4 h-4" />
+                        <Button variant="ghost" size="icon" onClick={() => isInlineEditing ? resetPromoForm() : editPromo(p)} className={isInlineEditing ? 'text-primary' : ''}>
+                          {isInlineEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => deletePromo(p.id)} className="hover:text-destructive">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
+                    {isInlineEditing && (
+                      <div className="bg-card border border-primary/40 border-t-0 rounded-b-xl p-5 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div><label className="text-sm text-muted-foreground mb-1 block">Título</label><Input value={promoForm.title} onChange={e => setPromoForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Combo Duplo" /></div>
+                          <div><label className="text-sm text-muted-foreground mb-1 block">Válido até</label><Input value={promoForm.valid_until} onChange={e => setPromoForm(f => ({ ...f, valid_until: e.target.value }))} placeholder="Ex: Hoje, 17h-19h" /></div>
+                          <div className="md:col-span-2"><label className="text-sm text-muted-foreground mb-1 block">Descrição</label><Input value={promoForm.description} onChange={e => setPromoForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição da promoção" /></div>
+                          <div><label className="text-sm text-muted-foreground mb-1 block">Preço original (R$)</label><Input type="number" step="0.01" value={promoForm.original_price} onChange={e => setPromoForm(f => ({ ...f, original_price: e.target.value }))} placeholder="79.60" /></div>
+                          <div><label className="text-sm text-muted-foreground mb-1 block">Preço promocional (R$)</label><Input type="number" step="0.01" value={promoForm.promo_price} onChange={e => setPromoForm(f => ({ ...f, promo_price: e.target.value }))} placeholder="59.90" /></div>
+                          <div className="md:col-span-2"><label className="text-sm text-muted-foreground mb-1 block">Itens (um por linha)</label><textarea value={promoForm.items} onChange={e => setPromoForm(f => ({ ...f, items: e.target.value }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] resize-y" rows={3} /></div>
+                          <div><label className="text-sm text-muted-foreground mb-1 block">Imagem</label><label className="h-10 rounded-md border border-input bg-background px-3 flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:bg-muted transition-colors"><Upload className="w-4 h-4" />{promoImageFile ? promoImageFile.name : 'Escolher imagem'}<input type="file" accept="image/*" className="hidden" onChange={e => setPromoImageFile(e.target.files?.[0] ?? null)} /></label></div>
+                          <div className="flex items-center"><button onClick={() => setPromoForm(f => ({ ...f, is_active: !f.is_active }))} className={cn('flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors', promoForm.is_active ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50')}><span className="text-sm">{promoForm.is_active ? '✅ Ativa' : '❌ Inativa'}</span></button></div>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button onClick={handlePromoSubmit} className="gradient-burger text-primary-foreground"><Save className="w-4 h-4 mr-2" /> Salvar</Button>
+                          <Button variant="outline" onClick={resetPromoForm}>Cancelar</Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {promotions.length === 0 && (
@@ -1618,103 +1850,76 @@ const Admin = () => {
               </Button>
             </div>
 
-            {showRewardForm && (
+            {/* Reward Form - only for new rewards */}
+            {showRewardForm && !inlineEditRewardId && (
               <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-                <h3 className="font-semibold text-foreground mb-4">
-                  {editingReward ? 'Editar Recompensa' : 'Nova Recompensa'}
-                </h3>
+                <h3 className="font-semibold text-foreground mb-4">Nova Recompensa</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    placeholder="Nome da recompensa"
-                    value={rewardForm.name}
-                    onChange={e => setRewardForm(f => ({ ...f, name: e.target.value }))}
-                    className="bg-background border-border"
-                  />
-                  <Input
-                    placeholder="Pontos necessários"
-                    type="number"
-                    value={rewardForm.points_required}
-                    onChange={e => setRewardForm(f => ({ ...f, points_required: e.target.value }))}
-                    className="bg-background border-border"
-                  />
-                  <select
-                    value={rewardForm.reward_type}
-                    onChange={e => setRewardForm(f => ({ ...f, reward_type: e.target.value }))}
-                    className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground"
-                  >
-                    {REWARD_TYPES.map(t => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
+                  <Input placeholder="Nome da recompensa" value={rewardForm.name} onChange={e => setRewardForm(f => ({ ...f, name: e.target.value }))} className="bg-background border-border" />
+                  <Input placeholder="Pontos necessários" type="number" value={rewardForm.points_required} onChange={e => setRewardForm(f => ({ ...f, points_required: e.target.value }))} className="bg-background border-border" />
+                  <select value={rewardForm.reward_type} onChange={e => setRewardForm(f => ({ ...f, reward_type: e.target.value }))} className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground">
+                    {REWARD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={rewardForm.is_active}
-                      onChange={e => setRewardForm(f => ({ ...f, is_active: e.target.checked }))}
-                      className="rounded"
-                    />
-                    <span className="text-sm text-foreground">Ativa</span>
-                  </div>
-                  <Input
-                    placeholder="Descrição (opcional)"
-                    value={rewardForm.description}
-                    onChange={e => setRewardForm(f => ({ ...f, description: e.target.value }))}
-                    className="bg-background border-border sm:col-span-2"
-                  />
+                  <div className="flex items-center gap-2"><input type="checkbox" checked={rewardForm.is_active} onChange={e => setRewardForm(f => ({ ...f, is_active: e.target.checked }))} className="rounded" /><span className="text-sm text-foreground">Ativa</span></div>
+                  <Input placeholder="Descrição (opcional)" value={rewardForm.description} onChange={e => setRewardForm(f => ({ ...f, description: e.target.value }))} className="bg-background border-border sm:col-span-2" />
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleRewardSubmit} className="gradient-burger text-primary-foreground">
-                    <Save className="w-4 h-4 mr-2" /> {editingReward ? 'Atualizar' : 'Criar'}
-                  </Button>
-                  <Button variant="outline" onClick={resetRewardForm}>
-                    <X className="w-4 h-4 mr-2" /> Cancelar
-                  </Button>
+                  <Button onClick={handleRewardSubmit} className="gradient-burger text-primary-foreground"><Save className="w-4 h-4 mr-2" /> Criar</Button>
+                  <Button variant="outline" onClick={resetRewardForm}><X className="w-4 h-4 mr-2" /> Cancelar</Button>
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {rewards.map(r => (
-                <div key={r.id} className={cn(
-                  'bg-card border rounded-2xl p-5 flex items-start gap-4',
-                  r.is_active ? 'border-border' : 'border-destructive/30 opacity-60'
-                )}>
-                  <div className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-                    r.is_active ? 'bg-primary/15' : 'bg-muted'
-                  )}>
-                    <Gift className={cn('w-5 h-5', r.is_active ? 'text-primary' : 'text-muted-foreground')} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="font-bold text-foreground text-sm">{r.name}</h4>
-                        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                          {getRewardTypeLabel(r.reward_type || 'custom')}
-                        </span>
+              {rewards.map(r => {
+                const isInlineEditing = inlineEditRewardId === r.id;
+                return (
+                  <div key={r.id} id={`reward-row-${r.id}`}>
+                    <div className={cn('bg-card border rounded-2xl p-5 flex items-start gap-4', r.is_active ? 'border-border' : 'border-destructive/30 opacity-60', isInlineEditing && 'border-primary ring-1 ring-primary rounded-b-none')}>
+                      <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', r.is_active ? 'bg-primary/15' : 'bg-muted')}>
+                        <Gift className={cn('w-5 h-5', r.is_active ? 'text-primary' : 'text-muted-foreground')} />
                       </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <Button variant="ghost" size="icon" onClick={() => editReward(r)}>
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteReward(r.id)} className="hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h4 className="font-bold text-foreground text-sm">{r.name}</h4>
+                            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{getRewardTypeLabel(r.reward_type || 'custom')}</span>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button variant="ghost" size="icon" onClick={() => isInlineEditing ? resetRewardForm() : editReward(r)} className={isInlineEditing ? 'text-primary' : ''}>
+                              {isInlineEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => deleteReward(r.id)} className="hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                          </div>
+                        </div>
+                        {r.description && <p className="text-xs text-muted-foreground mt-1">{r.description}</p>}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Star className="w-3 h-3 text-primary" />
+                          <span className="text-sm font-bold text-primary">{r.points_required} pontos</span>
+                          {!r.is_active && <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">Inativa</span>}
+                        </div>
                       </div>
                     </div>
-                    {r.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{r.description}</p>
+                    {isInlineEditing && (
+                      <div className="bg-card border border-primary/40 border-t-0 rounded-b-2xl p-5 animate-fade-in">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Input placeholder="Nome" value={rewardForm.name} onChange={e => setRewardForm(f => ({ ...f, name: e.target.value }))} className="bg-background border-border" />
+                          <Input placeholder="Pontos necessários" type="number" value={rewardForm.points_required} onChange={e => setRewardForm(f => ({ ...f, points_required: e.target.value }))} className="bg-background border-border" />
+                          <select value={rewardForm.reward_type} onChange={e => setRewardForm(f => ({ ...f, reward_type: e.target.value }))} className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground">
+                            {REWARD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                          </select>
+                          <div className="flex items-center gap-2"><input type="checkbox" checked={rewardForm.is_active} onChange={e => setRewardForm(f => ({ ...f, is_active: e.target.checked }))} className="rounded" /><span className="text-sm text-foreground">Ativa</span></div>
+                          <Input placeholder="Descrição (opcional)" value={rewardForm.description} onChange={e => setRewardForm(f => ({ ...f, description: e.target.value }))} className="bg-background border-border sm:col-span-2" />
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button onClick={handleRewardSubmit} className="gradient-burger text-primary-foreground"><Save className="w-4 h-4 mr-2" /> Salvar</Button>
+                          <Button variant="outline" onClick={resetRewardForm}><X className="w-4 h-4 mr-2" /> Cancelar</Button>
+                        </div>
+                      </div>
                     )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Star className="w-3 h-3 text-primary" />
-                      <span className="text-sm font-bold text-primary">{r.points_required} pontos</span>
-                      {!r.is_active && (
-                        <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">Inativa</span>
-                      )}
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {rewards.length === 0 && (
